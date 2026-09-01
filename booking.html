@@ -288,7 +288,6 @@
       <h1 style="margin:14px 0 20px; font-size:26px;">Painel administrativo</h1>
       <div class="field" style="text-align:left;"><label>Senha</label><input id="adminPass" type="password" placeholder="••••••••"></div>
       <button class="btn btn-primary btn-block" onclick="adminLogin()">Entrar</button>
-      <p style="font-family:var(--mono); font-size:10px; color:var(--shallow-dim); margin-top:14px;">Demo: senha <b style="color:var(--amber)">oceansafari</b></p>
     </div>
 
     <div id="adminPanel" style="display:none;">
@@ -510,8 +509,6 @@ const CANCEL_POLICY_HTML = `
 `;
 
 function simpleHash(str){
-  // Hash determinístico simples para demonstração.
-  // Em produção: SHA-256 do texto exato exibido, gerado no servidor.
   let h = 0;
   for(let i=0;i<str.length;i++){ h = (Math.imul(31,h) + str.charCodeAt(i))|0; }
   return 'sha256-demo-' + Math.abs(h).toString(16).padStart(8,'0');
@@ -1025,8 +1022,8 @@ async function checkAdminSession(){
 
 async function adminLogin(){
   const pass = document.getElementById('adminPass').value;
-  const { ok, data } = await apiSend('/api/admin/login', 'POST', { password: pass });
-  if(!ok){ showToast(data.error==='admin_password_not_configured' ? 'Senha de admin não configurada no servidor.' : 'Senha incorreta'); return; }
+  const { ok, status, data } = await apiSend('/api/admin/login', 'POST', { password: pass });
+  if(!ok){ alert(`Erro (${status}): ${data.error||'desconhecido'}`); return; }
   document.getElementById('adminGate').style.display='none';
   document.getElementById('adminPanel').style.display='block';
   document.getElementById('adminPass').value='';
