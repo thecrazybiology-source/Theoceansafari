@@ -177,7 +177,7 @@ async function adminLoginPost(req, res) {
   const { password } = readBody(req);
   const expected = process.env.ADMIN_PASSWORD;
   if (!expected) return res.status(500).json({ error: 'admin_password_not_configured' });
-  const a = Buffer.from(String(password || '')), b = Buffer.from(String(expected));
+  const a = Buffer.from(String(password || '').trim()), b = Buffer.from(String(expected).trim());
   const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
   if (!ok) return res.status(401).json({ error: 'invalid_password' });
   setAdminCookie(res, signSession({ role: 'admin' }));
