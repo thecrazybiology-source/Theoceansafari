@@ -1,9 +1,31 @@
 // ============================================================
 // THE OCEAN SAFARI — backend consolidado em um único arquivo.
-// Todas as rotas de /api/* passam por aqui via rewrite no vercel.json.
+// Todas as rotas de /api/* passam por aqui (Vercel catch-all route).
+// Isso existe num arquivo só de propósito: facilita publicar direto
+// pelo site do GitHub no celular, sem precisar de várias pastas.
 // ============================================================
 const crypto = require('crypto');
 const { Pool } = require('pg');
+
+// Precisa ser IDÊNTICA à TERMS_VERSION do booking.html. Sempre que o texto
+// do Termo de Riscos ou da Política de Cancelamento mudar, suba os dois
+// juntos — nunca altere o texto sem trocar a versão, ou o hash de aceites
+// antigos deixa de corresponder ao texto que a pessoa realmente aceitou.
+const TERMS_VERSION = '1.0';
+
+// Gera a "impressão digital" do aceite no servidor (nunca confiando em nada
+// vindo do navegador do cliente). Amarra: versão do termo + CPF de quem
+// assinou + nome digitado como assinatura + o instante exato do aceite.
+// Isso é o que torna o comprovante confiável: ele não pode ser fabricado
+// nem alterado por quem está preenchendo o formulário.
+function generateAcceptanceHash({ termsVersion, cpf, signatureName, acceptedAt }) {
+  const raw = `${termsVersion}|${String(cpf).replace(/\D/g, '')}|${signatureName.trim().toLowerCase()}|${acceptedAt}`;
+  return 'sha256-' + crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+function normalizeName(name) {
+  return String(name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 // ---------- Banco de dados ----------
 let pool;
@@ -71,7 +93,7 @@ function readBody(req) {
   return {};
 }
 
-// ---------- Settings ----------
+// ---------- Settings (prazo da pré-reserva configurável) ----------
 async function getHoldMinutes(pool) {
   try {
     const { rows } = await pool.query(`SELECT value FROM settings WHERE key = 'hold_duration_minutes'`);
@@ -112,13 +134,26 @@ async function tripsGet(req, res) {
 
 async function holdsPost(req, res) {
   const body = readBody(req);
-  const { date, qty, responsible, participants, healthAnswer, healthNote, healthConsent, termsVersion, documentHash } = body;
+  const { date, qty, responsible, participants, healthAnswer, healthNote, healthConsent, signatureName } = body;
 
   if (!date || !qty || !Number.isInteger(qty) || qty < 1) return res.status(400).json({ error: 'invalid_date_or_qty' });
   if (!responsible || !responsible.name || !responsible.phone || !responsible.cpf) return res.status(400).json({ error: 'missing_responsible_data' });
   if (!isValidCpfFormat(responsible.cpf)) return res.status(400).json({ error: 'invalid_cpf_format' });
-  if (!termsVersion || !documentHash) return res.status(400).json({ error: 'terms_not_accepted' });
   if (healthConsent !== true) return res.status(400).json({ error: 'health_consent_required' });
+
+  // A assinatura eletrônica exige que a pessoa digite o próprio nome de novo,
+  // de forma deliberada, e que bata com o nome informado como responsável.
+  // Isso é verificado aqui no servidor, não só na tela — o cliente não pode
+  // simplesmente pular essa etapa.
+  if (!signatureName || !signatureName.trim()) return res.status(400).json({ error: 'signature_required' });
+  if (normalizeName(signatureName) !== normalizeName(responsible.name)) {
+    return res.status(400).json({ error: 'signature_mismatch' });
+  }
+
+  const acceptedAt = new Date().toISOString();
+  const documentHash = generateAcceptanceHash({
+    termsVersion: TERMS_VERSION, cpf: responsible.cpf, signatureName, acceptedAt
+  });
 
   const pool = getPool();
   const client = await pool.connect();
@@ -142,12 +177,12 @@ async function holdsPost(req, res) {
     const insertRes = await client.query(
       `INSERT INTO holds (code, trip_date, qty, status, responsible_name, responsible_email, responsible_phone,
          responsible_cpf, participants, health_answer, health_note, health_consent, terms_version,
-         terms_document_hash, accept_ip, accept_user_agent, expires_at)
-       VALUES ($1,$2,$3,'AGUARDANDO_CONTATO',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         terms_accepted_at, terms_document_hash, accept_ip, accept_user_agent, expires_at)
+       VALUES ($1,$2,$3,'AGUARDANDO_CONTATO',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING code, expires_at`,
       [code, date, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf,
         JSON.stringify(participants || []), healthAnswer === true, healthNote || null, healthConsent === true,
-        termsVersion, documentHash, ip, ua, expiresAt]
+        TERMS_VERSION, acceptedAt, documentHash, ip, ua, expiresAt]
     );
     await client.query('COMMIT');
     res.status(201).json({ code: insertRes.rows[0].code, expiresAt: insertRes.rows[0].expires_at, status: 'AGUARDANDO_CONTATO' });
@@ -159,16 +194,24 @@ async function holdsPost(req, res) {
 
 async function holdsStatusGet(req, res) {
   const code = String(req.query.code || '').trim().toUpperCase();
+  const email = String(req.query.email || '').trim().toLowerCase();
   if (!code) return res.status(400).json({ error: 'missing_code' });
+  if (!email) return res.status(400).json({ error: 'missing_email' });
   const pool = getPool();
-  const { rows } = await pool.query(`SELECT code, trip_date, qty, status, expires_at FROM holds WHERE code = $1`, [code]);
+  const { rows } = await pool.query(`SELECT code, trip_date, qty, status, expires_at, responsible_email FROM holds WHERE code = $1`, [code]);
   if (!rows.length) return res.status(404).json({ error: 'not_found' });
   const h = rows[0];
+  // Reservas do fluxo público sempre têm e-mail cadastrado: exige que bata.
+  // Reservas manuais (fechadas por WhatsApp) podem não ter e-mail; nesse
+  // caso não há o que conferir, então não bloqueia a consulta.
+  if (h.responsible_email && h.responsible_email.trim().toLowerCase() !== email) {
+    return res.status(404).json({ error: 'not_found' });
+  }
   res.status(200).json({ code: h.code, date: dateStr(h.trip_date), qty: h.qty, status: h.status, expiresAt: h.expires_at });
 }
 
 // ============================================================
-// ROTAS ADMIN
+// ROTAS ADMIN (todas exigem sessão válida)
 // ============================================================
 
 async function adminLoginPost(req, res) {
@@ -292,7 +335,7 @@ async function adminHoldsGet(req, res) {
       responsible: { name: h.responsible_name, email: h.responsible_email, phone: h.responsible_phone, cpf: h.responsible_cpf },
       participants: h.participants, healthAnswer: h.health_answer, healthNote: h.health_note,
       termsVersion: h.terms_version, termsAcceptedAt: h.terms_accepted_at, documentHash: h.terms_document_hash,
-      acceptIp: h.accept_ip, createdAt: h.created_at, expiresAt: h.expires_at,
+      acceptIp: h.accept_ip, acceptUserAgent: h.accept_user_agent, createdAt: h.created_at, expiresAt: h.expires_at,
       confirmedAt: h.confirmed_at, cancelledAt: h.cancelled_at, adminNotes: h.admin_notes
     }))
   });
@@ -375,7 +418,7 @@ async function adminHoldsManualPost(req, res) {
 }
 
 // ============================================================
-// CRON
+// CRON — expira pré-reservas vencidas
 // ============================================================
 async function cronExpire(req, res) {
   if (process.env.CRON_SECRET) {
@@ -401,7 +444,7 @@ async function cronExpire(req, res) {
 }
 
 // ============================================================
-// ROTEADOR — usa req.query.path (vindo do rewrite do vercel.json)
+// ROTEADOR — decide qual função chamar a partir de /api/<segments>
 // ============================================================
 module.exports = async (req, res) => {
   try {
@@ -410,10 +453,12 @@ module.exports = async (req, res) => {
     const path = '/' + segments.join('/');
     const method = req.method;
 
+    // rotas públicas
     if (path === '/trips' && method === 'GET') return await tripsGet(req, res);
     if (path === '/holds' && method === 'POST') return await holdsPost(req, res);
     if (path === '/holds/status' && method === 'GET') return await holdsStatusGet(req, res);
 
+    // rotas admin
     if (path === '/admin/login' && method === 'POST') return await adminLoginPost(req, res);
     if (path === '/admin/logout' && method === 'POST') return await adminLogoutPost(req, res);
     if (path === '/admin/session' && method === 'GET') return await adminSessionGet(req, res);
@@ -428,6 +473,7 @@ module.exports = async (req, res) => {
     if (path === '/admin/holds/action' && method === 'POST') return await adminHoldsActionPost(req, res);
     if (path === '/admin/holds/manual' && method === 'POST') return await adminHoldsManualPost(req, res);
 
+    // cron (protegido por CRON_SECRET, não por sessão de admin)
     if (path === '/cron/expire') return await cronExpire(req, res);
 
     res.status(404).json({ error: 'not_found', path });
