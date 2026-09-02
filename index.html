@@ -251,7 +251,7 @@
   }
   .cinebreak .cine-img{
     max-height:80vh; max-width:100%; width:auto; height:auto; display:block;
-    box-shadow:0 40px 100px rgba(0,0,0,0.55);
+    object-fit:contain; box-shadow:0 40px 100px rgba(0,0,0,0.55);
   }
   .cinebreak .cine-glow{
     position:absolute; inset:-10%; z-index:0; opacity:0.35; filter:blur(60px);
@@ -520,7 +520,7 @@
 
   <!-- QUEBRA CINEMATOGRÁFICA -->
   <section class="cinebreak cine-whale-dolphin">
-    <div class="cine-img" role="img" aria-label="Baleia-jubarte vista de cima ao lado de um golfinho, nadando juntos em Ilhabela" style="background-image:url('images/01-fundo-baleia-golfinho.jpg');"></div>
+    <img class="cine-img" src="images/01-fundo-baleia-golfinho.jpg" alt="Baleia-jubarte vista de cima ao lado de um golfinho, nadando juntos em Ilhabela">
     <div class="cine-caption">Baleia-jubarte e golfinho · Ilhabela</div>
   </section>
 
@@ -618,7 +618,9 @@
       <div class="animal-card">
         <div role="img" aria-label="Cardume de peixes nadando entre os costões de Ilhabela" style="width:100%;height:100%;background-image:url('images/03-encontros-peixes.jpg');background-size:cover;background-position:center;"></div>
         <div class="animal-overlay">
-          <div class="name">Peixes — residentes, avistados o ano todo.</div>
+          <div class="name">Peixes</div>
+          <div class="sci">Diversidade recifal e pelágica</div>
+          <div class="season">Residentes · avistados o ano todo</div>
         </div>
       </div>
       <div class="animal-card">
@@ -669,7 +671,7 @@
 
   <!-- QUEBRA CINEMATOGRÁFICA -->
   <section class="cinebreak cine-boat-dolphins">
-    <div class="cine-img" role="img" aria-label="Vista aérea da proa da embarcação com dois golfinhos nadando ao lado" style="background-image:url('images/02-fundo-barco-golfinhos.jpg');"></div>
+    <img class="cine-img" src="images/02-fundo-barco-golfinhos.jpg" alt="Vista aérea da proa da embarcação com dois golfinhos nadando ao lado">
     <div class="cine-caption">A bordo, cercados de golfinhos · Ilhabela</div>
   </section>
 
