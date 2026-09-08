@@ -90,6 +90,23 @@
   .detail-row span:first-child{ color:var(--shallow-dim); font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; }
   .detail-row span:last-child{ color:var(--foam); font-weight:400; text-align:right; }
   .detail-price{ font-family:var(--serif); font-size:32px; color:var(--amber); margin-bottom:4px; }
+  /* Linha da expedição (Signature / Explorer) no painel de detalhe */
+  .detail-line{ font-family:var(--serif); font-size:18px; color:var(--foam); margin:6px 0 10px; }
+  .detail-line em{ font-style:normal; color:var(--shallow); }
+  /* Escolha entre as duas linhas quando as duas saem no mesmo dia */
+  .line-options{ display:flex; flex-direction:column; gap:12px; }
+  .line-option{
+    width:100%; text-align:left; cursor:pointer;
+    background:none; border:1px solid var(--line-2); border-radius:2px;
+    padding:16px 16px 14px; color:var(--foam);
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .line-option:hover:not(:disabled){ border-color:var(--amber); transform:translateY(-1px); }
+  .line-option:disabled{ opacity:.45; cursor:not-allowed; }
+  .line-option-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .line-option-top b{ font-family:var(--serif); font-size:17px; font-weight:400; }
+  .line-option-top b em{ font-style:normal; color:var(--shallow); }
+  .line-option-meta{ margin-top:7px; font-size:12.5px; color:var(--shallow); }
   .detail-price small{ font-family:var(--sans); font-size:13px; color:var(--shallow); }
   .btn{ font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:15px 22px; border-radius:2px; border:none; text-align:center; transition:all .2s ease; }
   .btn-primary{ background:var(--amber); color:var(--abyss); }
@@ -246,7 +263,7 @@
     <div class="booking-head">
       <div class="eyebrow">The Ocean Safari</div>
       <h1>Escolha sua data</h1>
-      <p>Selecione um dia no calendário para ver horário, vagas restantes e reservar. Grupos de até 10 participantes por saída.</p>
+      <p>Selecione um dia no calendário para ver horário, vagas restantes e reservar. Alguns dias têm mais de uma expedição saindo.</p>
     </div>
 
     <div class="legend">
@@ -329,6 +346,20 @@
       </div>
       <div id="newTripForm" style="display:none; background:var(--deep); border:1px solid var(--line-2); padding:20px; margin-bottom:20px;">
         <div class="field-row" style="margin-bottom:14px;">
+          <div class="field" style="margin-bottom:0;"><label>Linha</label>
+            <select id="ntLine" onchange="applyLineDefaults()">
+              <option value="signature">Signature (Daniel · até 10)</option>
+              <option value="explorer">Explorer (equipe · até 16)</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;"><label>Destino</label>
+            <select id="ntDest">
+              <option value="Ilhabela">Ilhabela</option>
+              <option value="Alcatrazes">Alcatrazes</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Data</label><input type="date" id="ntDate"></div>
           <div class="field" style="margin-bottom:0;"><label>Preço (R$)</label><input type="number" id="ntPrice" value="649"></div>
         </div>
@@ -363,7 +394,7 @@
 
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Data</th><th>Horário</th><th>Preço</th><th>Vagas</th><th>Status</th><th>Ações</th></tr></thead>
+          <thead><tr><th>Data</th><th>Linha</th><th>Destino</th><th>Horário</th><th>Preço</th><th>Vagas</th><th>Status</th><th>Ações</th></tr></thead>
           <tbody id="adminTripsBody"></tbody>
         </table>
       </div>
@@ -423,8 +454,11 @@
    API LAYER: fala com o backend real (/api/*), com banco Postgres
    e bloqueio de vagas transacional. Nada aqui é simulado.
    ============================================================ */
-const CAPACITY_DEFAULT = 10; // capacidade padrão inicial (10 participantes por embarcação/data)
-const BASE_PRICE = 649;      // idem
+// Valores antigos, de quando existia uma linha só. Hoje cada linha tem os
+// próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 649 e
+// Explorer 16 vagas / R$ 399. Mantidos apenas como referência.
+const CAPACITY_DEFAULT = 10;
+const BASE_PRICE = 649;
 
 async function apiGet(url){
   try{
@@ -593,8 +627,23 @@ function simulateParticipantAccept(i){
 function fmtDate(d){ return d.toISOString().slice(0,10); }
 function todayStart(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
 
-let TRIPS = {};
+// Uma data pode ter mais de uma saída: Signature e Explorer rodam em
+// paralelo, no mesmo dia, em barcos diferentes. Por isso a saída é
+// identificada por DATA + LINHA, e não só pela data — se fosse só a
+// data, a segunda saída sobrescreveria a primeira e sumiria do site.
+const LINE_LABELS = { signature: 'Signature', explorer: 'Explorer' };
+const LINE_ORDER = ['signature', 'explorer'];
+
+function tripKey(date, line){ return `${date}|${line}`; }
+function parseTripKey(key){
+  const [date, line] = String(key||'').split('|');
+  return { date, line };
+}
+
+let TRIPS = {};        // chave "data|linha" -> saída
+let TRIPS_BY_DATE = {}; // chave "data" -> [saídas daquele dia]
 let selectedDateKey = null;
+let selectedTripKey = null;
 let checkoutState = {};
 
 async function fetchTrips(){
@@ -613,15 +662,32 @@ async function fetchTrips(){
     return;
   }
   TRIPS = {};
+  TRIPS_BY_DATE = {};
   (data.trips||[]).forEach(t=>{
-    TRIPS[t.date] = {
-      date:t.date, start:t.start, end:t.end, price:t.price,
+    // Saídas antigas, criadas antes das linhas existirem, são Signature.
+    const line = t.line || 'signature';
+    const key = tripKey(t.date, line);
+    const trip = {
+      key, date:t.date, line, destination: t.destination || 'Ilhabela',
+      start:t.start, end:t.end, price:t.price,
       capacity:t.capacity, booked: t.capacity - t.available,
       point: t.point || 'Ilhabela', status:t.status
     };
+    TRIPS[key] = trip;
+    (TRIPS_BY_DATE[t.date] = TRIPS_BY_DATE[t.date] || []).push(trip);
+  });
+  // Signature sempre antes de Explorer, para a ordem não variar conforme
+  // o que o banco devolver primeiro.
+  Object.values(TRIPS_BY_DATE).forEach(list=>{
+    list.sort((a,b)=> LINE_ORDER.indexOf(a.line) - LINE_ORDER.indexOf(b.line));
   });
   renderCalendar();
   if(selectedDateKey) renderDetail(selectedDateKey);
+}
+
+// Saídas de um dia que a pessoa ainda pode reservar (bloqueadas não contam).
+function bookableTrips(dateKey){
+  return (TRIPS_BY_DATE[dateKey]||[]).filter(t=> t.status !== 'blocked');
 }
 
 function tripStatus(trip){
@@ -674,21 +740,28 @@ function renderCalendar(){
   for(let day=1; day<=daysInMonth; day++){
     const d = new Date(calCursor.getFullYear(), calCursor.getMonth(), day);
     const key = fmtDate(d);
-    const trip = TRIPS[key];
+    const dayTrips = TRIPS_BY_DATE[key] || [];
+    const open = bookableTrips(key);
     const el = document.createElement('div');
     el.className='cal-day';
-    el.innerHTML = day + (trip && trip.status!=='blocked' ? '<div class="d">●</div>' : '');
+    // Um ponto por linha disponível no dia: um dia com Signature e
+    // Explorer mostra dois pontos, e a pessoa já vê que tem escolha.
+    const dots = open.map(t=>{
+      const st = tripStatus(t);
+      const color = st==='ok'?'var(--green)':st==='low'?'var(--amber)':st==='full'?'var(--red)':'var(--shallow-dim)';
+      return `<span style="color:${color}">●</span>`;
+    }).join('');
+    el.innerHTML = day + (dots ? `<div class="d">${dots}</div>` : '');
     if(d < today){ el.classList.add('past'); }
-    if(trip){
-      const st = tripStatus(trip);
-      el.classList.add('trip');
-      const dotEl = el.querySelector('.d');
-      if(dotEl){
-        const color = st==='ok'?'var(--green)':st==='low'?'var(--amber)':st==='full'?'var(--red)':'var(--shallow-dim)';
-        dotEl.style.color = color;
+    if(dayTrips.length){
+      if(open.length){
+        el.classList.add('trip');
+        el.addEventListener('click', ()=>{ selectDate(key); });
+      } else {
+        // Todas as saídas do dia estão bloqueadas.
+        el.style.color='var(--shallow-dim)';
+        el.style.borderColor='var(--line)';
       }
-      if(st==='blocked'){ el.classList.remove('trip'); el.style.color='var(--shallow-dim)'; el.style.borderColor='var(--line)';}
-      el.addEventListener('click', ()=>{ selectDate(key); });
       if(key===selectedDateKey) el.classList.add('selected');
     }
     grid.appendChild(el);
@@ -699,24 +772,68 @@ document.getElementById('nextMonth').onclick=()=>{ calCursor.setMonth(calCursor.
 
 function selectDate(key){
   selectedDateKey = key;
+  // Se o dia só tem uma saída, já deixa ela escolhida — não faz sentido
+  // pedir para a pessoa "escolher" entre uma opção só.
+  const open = bookableTrips(key);
+  selectedTripKey = open.length === 1 ? open[0].key : null;
   renderCalendar();
   renderDetail(key);
 }
 
+function selectTrip(tKey){
+  selectedTripKey = tKey;
+  renderDetail(selectedDateKey);
+}
+
 function renderDetail(key){
-  const trip = TRIPS[key];
   const panel = document.getElementById('detailPanel');
-  if(!trip){ panel.innerHTML = '<div class="detail-empty">Selecione uma data disponível<br>para ver os detalhes da saída.</div>'; return; }
+  const open = bookableTrips(key);
+  if(!open.length){
+    panel.innerHTML = '<div class="detail-empty">Selecione uma data disponível<br>para ver os detalhes da saída.</div>';
+    return;
+  }
+  const dateLabel = new Date(key+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'long'});
+
+  // Dia com as duas linhas e nenhuma escolhida ainda: mostra as opções.
+  if(open.length > 1 && !selectedTripKey){
+    panel.innerHTML = `
+      <h3 style="text-transform:capitalize;">${dateLabel}</h3>
+      <p style="color:var(--shallow); font-size:13px; margin:10px 0 18px;">Duas expedições saem nesta data. Escolha a sua.</p>
+      <div class="line-options">
+        ${open.map(t=>{
+          const st = tripStatus(t);
+          const remaining = remainingSeats(t);
+          const stLabel = st==='ok'?'Disponível':st==='low'?'Últimas vagas':'Esgotado';
+          return `<button class="line-option" data-trip="${t.key}" ${st==='full'?'disabled':''}>
+            <div class="line-option-top">
+              <b>The Ocean Safari <em>${LINE_LABELS[t.line]||t.line}</em></b>
+              <span class="detail-status ${st}">${stLabel}</span>
+            </div>
+            <div class="line-option-meta">R$ ${t.price} / participante · ${t.destination} · ${st==='full'?'sem vagas':remaining+' vagas'}</div>
+          </button>`;
+        }).join('')}
+      </div>
+    `;
+    panel.querySelectorAll('.line-option').forEach(btn=>{
+      if(btn.disabled) return;
+      btn.addEventListener('click', ()=> selectTrip(btn.dataset.trip));
+    });
+    return;
+  }
+
+  const trip = TRIPS[selectedTripKey] || open[0];
   const st = tripStatus(trip);
   const remaining = remainingSeats(trip);
   const stLabel = st==='ok'?'Disponível':st==='low'?'Últimas vagas':st==='full'?'Esgotado':'Sem saída';
-  const dateLabel = new Date(key+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'long'});
+  const canSwitch = open.length > 1;
   panel.innerHTML = `
     <span class="detail-status ${st}">${stLabel}</span>
     <h3 style="text-transform:capitalize;">${dateLabel}</h3>
+    <div class="detail-line">The Ocean Safari <em>${LINE_LABELS[trip.line]||trip.line}</em></div>
     <div class="detail-price">R$ ${trip.price}<small> / participante</small></div>
     <div class="detail-rows">
       <div class="detail-row"><span>Horário</span><span>${trip.start} às ${trip.end} (6h)</span></div>
+      <div class="detail-row"><span>Destino</span><span>${trip.destination}</span></div>
       <div class="detail-row"><span>Ponto de encontro</span><span>${trip.point}</span></div>
       <div class="detail-row"><span>Capacidade</span><span>${trip.capacity} participantes</span></div>
       <div class="detail-row"><span>Vagas restantes</span><span>${st==='blocked'?'N/D':remaining}</span></div>
@@ -724,20 +841,27 @@ function renderDetail(key){
     <button class="btn btn-primary btn-block" id="reserveBtn" ${st==='full'||st==='blocked'?'disabled':''}>
       ${st==='full'?'Esgotado':st==='blocked'?'Indisponível':'Reservar agora'}
     </button>
+    ${canSwitch ? '<button class="btn btn-ghost btn-block" id="switchLineBtn" style="margin-top:10px;">Ver a outra expedição do dia</button>' : ''}
   `;
   const btn = document.getElementById('reserveBtn');
-  if(btn && !btn.disabled){ btn.addEventListener('click', ()=>openCheckout(key)); }
+  if(btn && !btn.disabled){ btn.addEventListener('click', ()=>openCheckout(trip.key)); }
+  const sw = document.getElementById('switchLineBtn');
+  if(sw){ sw.addEventListener('click', ()=>{ selectedTripKey = null; renderDetail(key); }); }
 }
 
 /* ============================================================
    CHECKOUT FLOW (modal, 5 passos)
    ============================================================ */
 function openCheckout(key){
+  // key aqui é "data|linha": o checkout precisa saber de qual das duas
+  // saídas do dia está tratando, e não só a data.
+  const { date, line } = parseTripKey(key);
   checkoutState = {
-    key, qty:1, name:'', email:'', phone:'', cpf:'',
+    key, date, line, qty:1, name:'', email:'', phone:'', cpf:'',
     riskAccepted:false, cancelAccepted:false,
     healthAnswer:null, healthNote:'', healthConsent:false,
     signatureName:'',
+    gear:{ wetsuits:0, fins:0 },
     otherParticipants:[]
   };
   document.getElementById('modalBg').classList.add('open');
@@ -745,11 +869,66 @@ function openCheckout(key){
 }
 function closeModal(){ document.getElementById('modalBg').classList.remove('open'); }
 
-function stepsTrack(activeIdx){
+/* ------------------------------------------------------------
+   Etapas do checkout. Saídas para Alcatrazes têm uma etapa a mais
+   (aluguel de equipamento de mergulho), então a barra de progresso
+   não pode ter um número fixo de passos.
+   ------------------------------------------------------------ */
+const GEAR_ITEM_PRICE = 60; // por peça (roupa 2mm ou nadadeira)
+
+function tripHasGear(trip){
+  return !!trip && String(trip.destination||'').toLowerCase() === 'alcatrazes';
+}
+// Se a pessoa diminuir o número de participantes depois de já ter
+// escolhido equipamento, as peças precisam acompanhar — senão sobraria
+// aluguel para gente que não vai mais embarcar.
+function clampGear(){
+  if(!checkoutState.gear) return;
+  checkoutState.gear.wetsuits = Math.min(checkoutState.gear.wetsuits, checkoutState.qty);
+  checkoutState.gear.fins = Math.min(checkoutState.gear.fins, checkoutState.qty);
+}
+
+function checkoutSteps(){
+  const trip = TRIPS[checkoutState.key];
+  return tripHasGear(trip)
+    ? ['qty','gear','data','terms','signature','confirm']
+    : ['qty','data','terms','signature','confirm'];
+}
+function stepsTrack(stepName){
+  const steps = checkoutSteps();
+  // 'submitting' não é uma etapa própria: mostra a barra cheia, como o
+  // passo final, enquanto o servidor responde.
+  const name = stepName === 'submitting' ? 'confirm' : stepName;
+  const activeIdx = steps.indexOf(name);
   let html='<div class="steps-track">';
-  for(let i=0;i<5;i++) html+=`<div class="${i<=activeIdx?'done':''}"></div>`;
+  for(let i=0;i<steps.length;i++) html+=`<div class="${i<=activeIdx?'done':''}"></div>`;
   html+='</div>';
   return html;
+}
+// Etapa anterior à atual, para os botões "Voltar" acompanharem a
+// presença (ou não) da etapa de equipamento.
+function prevStep(current){
+  const steps = checkoutSteps();
+  const i = steps.indexOf(current);
+  return i > 0 ? steps[i-1] : 'qty';
+}
+// Total do aluguel escolhido. O servidor recalcula esse valor por conta
+// própria; aqui é só para a pessoa ver o que está somando.
+function gearTotal(){
+  const g = checkoutState.gear || { wetsuits:0, fins:0 };
+  return (g.wetsuits + g.fins) * GEAR_ITEM_PRICE;
+}
+
+// Mostra, no painel admin, quantas peças de equipamento a reserva alugou.
+// É o que a operadora de mergulho precisa separar antes do embarque.
+function gearBadge(h){
+  const g = h.gear || {};
+  const ws = g.wetsuits||0, fn = g.fins||0;
+  if(!ws && !fn) return '';
+  const parts = [];
+  if(ws) parts.push(`${ws}× roupa 2mm`);
+  if(fn) parts.push(`${fn}× nadadeira`);
+  return `<br><span style="color:var(--amber); font-size:11px;">${parts.join(' · ')}</span>`;
 }
 
 function renderStep(step){
@@ -759,7 +938,7 @@ function renderStep(step){
 
   if(step==='qty'){
     document.getElementById('modalTitle').textContent = 'Quantas pessoas?';
-    body.innerHTML = stepsTrack(0) + `
+    body.innerHTML = stepsTrack('qty') + `
       <div class="qty-row">
         <div>
           <div style="font-size:14px;">Participantes</div>
@@ -777,14 +956,67 @@ function renderStep(step){
       </div>
       <button class="btn btn-primary btn-block" id="toStep2">Continuar</button>
     `;
-    document.getElementById('qtyMinus').onclick=()=>{ if(checkoutState.qty>1){ checkoutState.qty--; updateQtyUI(trip); } };
+    document.getElementById('qtyMinus').onclick=()=>{ if(checkoutState.qty>1){ checkoutState.qty--; clampGear(); updateQtyUI(trip); } };
     document.getElementById('qtyPlus').onclick=()=>{ if(checkoutState.qty<remaining){ checkoutState.qty++; updateQtyUI(trip); } };
-    document.getElementById('toStep2').onclick=()=> renderStep('data');
+    document.getElementById('toStep2').onclick=()=> renderStep(tripHasGear(trip) ? 'gear' : 'data');
+  }
+
+  /* Aluguel de equipamento — só nas saídas para Alcatrazes, onde há
+     mergulho livre. Máscara e snorkel já vão inclusos no passeio. */
+  if(step==='gear'){
+    document.getElementById('modalTitle').textContent = 'Equipamento de mergulho';
+    const g = checkoutState.gear;
+    body.innerHTML = stepsTrack('gear') + `
+      <p style="color:var(--shallow); font-size:13.5px; line-height:1.7; margin-bottom:18px;">
+        Máscara e snorkel já estão inclusos na expedição. Se quiser, você pode alugar roupa de neoprene 2mm e nadadeira.
+        O tamanho é ajustado na prova presencial, antes do embarque.
+      </p>
+      <div class="qty-row">
+        <div>
+          <div style="font-size:14px;">Roupa de neoprene 2mm</div>
+          <div class="qty-note">R$ ${GEAR_ITEM_PRICE} por peça</div>
+        </div>
+        <div class="qty-ctrl">
+          <button id="wsMinus">−</button><span id="wsVal">${g.wetsuits}</span><button id="wsPlus">+</button>
+        </div>
+      </div>
+      <div class="qty-row">
+        <div>
+          <div style="font-size:14px;">Nadadeira</div>
+          <div class="qty-note">R$ ${GEAR_ITEM_PRICE} por par</div>
+        </div>
+        <div class="qty-ctrl">
+          <button id="fnMinus">−</button><span id="fnVal">${g.fins}</span><button id="fnPlus">+</button>
+        </div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-line"><span>Expedição (${checkoutState.qty}×)</span><b>R$ ${trip.price*checkoutState.qty}</b></div>
+        <div class="summary-line"><span>Aluguel de equipamento</span><b id="gearSub">R$ ${gearTotal()}</b></div>
+        <div class="summary-total"><span>Total</span><span id="gearTotalEl">R$ ${trip.price*checkoutState.qty + gearTotal()}</span></div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-ghost" onclick="renderStep('qty')">Voltar</button>
+        <button class="btn btn-primary" style="flex:1;" id="gearNext">Continuar</button>
+      </div>
+    `;
+    const refreshGear = ()=>{
+      document.getElementById('wsVal').textContent = checkoutState.gear.wetsuits;
+      document.getElementById('fnVal').textContent = checkoutState.gear.fins;
+      document.getElementById('gearSub').textContent = 'R$ ' + gearTotal();
+      document.getElementById('gearTotalEl').textContent = 'R$ ' + (trip.price*checkoutState.qty + gearTotal());
+    };
+    // O máximo é o número de participantes: não faz sentido alugar mais
+    // peças do que pessoas embarcando.
+    document.getElementById('wsMinus').onclick=()=>{ if(checkoutState.gear.wetsuits>0){ checkoutState.gear.wetsuits--; refreshGear(); } };
+    document.getElementById('wsPlus').onclick=()=>{ if(checkoutState.gear.wetsuits<checkoutState.qty){ checkoutState.gear.wetsuits++; refreshGear(); } };
+    document.getElementById('fnMinus').onclick=()=>{ if(checkoutState.gear.fins>0){ checkoutState.gear.fins--; refreshGear(); } };
+    document.getElementById('fnPlus').onclick=()=>{ if(checkoutState.gear.fins<checkoutState.qty){ checkoutState.gear.fins++; refreshGear(); } };
+    document.getElementById('gearNext').onclick=()=> renderStep('data');
   }
 
   if(step==='data'){
     document.getElementById('modalTitle').textContent = 'Seus dados';
-    body.innerHTML = stepsTrack(1) + `
+    body.innerHTML = stepsTrack('data') + `
       <div class="field"><label>Nome completo</label><input id="cName" value="${checkoutState.name}"></div>
       <div class="field-row">
         <div class="field"><label>E-mail</label><input id="cEmail" type="email" value="${checkoutState.email}"></div>
@@ -795,7 +1027,7 @@ function renderStep(step){
         <div class="summary-line"><span>${checkoutState.qty} participante(s)</span><b>R$ ${trip.price*checkoutState.qty}</b></div>
       </div>
       <div style="display:flex; gap:12px;">
-        <button class="btn btn-ghost" onclick="renderStep('qty')">Voltar</button>
+        <button class="btn btn-ghost" onclick="renderStep(prevStep('data'))">Voltar</button>
         <button class="btn btn-primary" style="flex:1;" id="toStep3">Continuar</button>
       </div>
     `;
@@ -839,7 +1071,7 @@ function renderStep(step){
         </div>`;
     }).join('');
 
-    body.innerHTML = stepsTrack(2) + `
+    body.innerHTML = stepsTrack('terms') + `
       <div class="micro-resumo">
         <ul>
           <li>Atividade em mar aberto, com riscos inerentes à navegação e ao mergulho livre.</li>
@@ -915,7 +1147,7 @@ function renderStep(step){
 
   if(step==='signature'){
     document.getElementById('modalTitle').textContent = 'Assinatura eletrônica';
-    body.innerHTML = stepsTrack(3) + `
+    body.innerHTML = stepsTrack('signature') + `
       <div class="micro-resumo">
         <p style="margin:0;">Para confirmar que <b style="color:var(--foam);">${checkoutState.name}</b> leu e concorda com o Termo de Ciência e Assunção de Riscos e com a Política de Cancelamento, digite seu nome completo abaixo. Isso vale como sua assinatura eletrônica.</p>
       </div>
@@ -950,24 +1182,27 @@ function renderStep(step){
 
   if(step==='submitting'){
     document.getElementById('modalTitle').textContent = 'Enviando...';
-    body.innerHTML = stepsTrack(4) + `<div style="text-align:center; padding:30px 0; color:var(--shallow);">Registrando sua pré-reserva com segurança...</div>`;
+    body.innerHTML = stepsTrack('submitting') + `<div style="text-align:center; padding:30px 0; color:var(--shallow);">Registrando sua pré-reserva com segurança...</div>`;
   }
 
   if(step==='confirm'){
     const code = checkoutState.lastCode;
     const expiresAt = new Date(checkoutState.lastExpiresAt);
-    const dateLabel = new Date(checkoutState.key+'T00:00:00').toLocaleDateString('pt-BR');
+    const dateLabel = new Date(checkoutState.date+'T00:00:00').toLocaleDateString('pt-BR');
     const expiresLabel = expiresAt.toLocaleString('pt-BR');
     const waNumber = WHATSAPP_NUMBER;
+    const gearLine = gearTotal() > 0
+      ? `Aluguel: ${checkoutState.gear.wetsuits ? checkoutState.gear.wetsuits+' roupa(s) 2mm' : ''}${checkoutState.gear.wetsuits && checkoutState.gear.fins ? ' + ' : ''}${checkoutState.gear.fins ? checkoutState.gear.fins+' nadadeira(s)' : ''} (R$ ${gearTotal()})\n`
+      : '';
     const waText = encodeURIComponent(
-      `Olá! Acabei de fazer uma pré-reserva para o The Ocean Safari.\n\n`+
-      `Código: ${code}\nData: ${dateLabel}\nParticipantes: ${checkoutState.qty}\n\n`+
+      `Olá! Acabei de fazer uma pré-reserva para o The Ocean Safari ${LINE_LABELS[checkoutState.line]||''}.\n\n`+
+      `Código: ${code}\nData: ${dateLabel}\nParticipantes: ${checkoutState.qty}\n`+gearLine+`\n`+
       `Gostaria de finalizar minha reserva.`
     );
     const waLink = `https://wa.me/${waNumber}?text=${waText}`;
 
     document.getElementById('modalTitle').textContent = 'Pré-reserva realizada!';
-    body.innerHTML = stepsTrack(4) + `
+    body.innerHTML = stepsTrack('confirm') + `
       <div class="confirm-check">✓</div>
       <p style="text-align:center; color:var(--shallow);">
         Separamos temporariamente <b style="color:var(--foam);">${checkoutState.qty} vaga(s)</b> em
@@ -999,8 +1234,12 @@ async function submitPreReserva(){
   renderStep('submitting');
 
   const payload = {
-    date: checkoutState.key,
+    date: checkoutState.date,
+    line: checkoutState.line,
     qty: checkoutState.qty,
+    // O servidor recalcula o valor a partir destas quantidades e ignora
+    // qualquer total que viesse daqui.
+    gear: { wetsuits: checkoutState.gear.wetsuits, fins: checkoutState.gear.fins },
     responsible: {
       name: checkoutState.name, email: checkoutState.email,
       phone: checkoutState.phone, cpf: checkoutState.cpf
@@ -1169,18 +1408,31 @@ async function renderAdmin(){
     const occupied = t.confirmed + t.held;
     const st = t.status==='blocked' ? 'blocked' : (t.capacity-occupied<=0 ? 'full' : (t.capacity-occupied<=3 ? 'low' : 'ok'));
     const stLabel = st==='ok'?'Disponível':st==='low'?'Últimas vagas':st==='full'?'Esgotado':'Bloqueada';
+    const line = t.line || 'signature';
+    const dest = t.destination || 'Ilhabela';
+    // Alcatrazes só pode ser Signature (exige condutor credenciado pelo
+    // ICMBio). O select do Explorer não oferece essa opção.
+    const destOptions = line === 'signature'
+      ? ['Ilhabela','Alcatrazes']
+      : ['Ilhabela'];
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${new Date(t.date+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})}</td>
+      <td><span class="badge ${line==='signature'?'ok':'low'}">${line==='signature'?'Signature':'Explorer'}</span></td>
+      <td>
+        <select class="editable" onchange="updateTripField('${t.date}','destination',this.value,'${line}')" ${destOptions.length===1?'disabled':''}>
+          ${destOptions.map(o=>`<option value="${o}" ${o===dest?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </td>
       <td>${t.start}–${t.end}</td>
-      <td><input class="editable" type="number" value="${t.price}" onchange="updateTripField('${t.date}','price',this.value)"></td>
-      <td><input class="editable" type="number" value="${t.capacity}" onchange="updateTripField('${t.date}','capacity',this.value)"> (${t.confirmed} conf. + ${t.held} bloq.)</td>
+      <td><input class="editable" type="number" value="${t.price}" onchange="updateTripField('${t.date}','price',this.value,'${line}')"></td>
+      <td><input class="editable" type="number" value="${t.capacity}" onchange="updateTripField('${t.date}','capacity',this.value,'${line}')"> (${t.confirmed} conf. + ${t.held} bloq.)</td>
       <td><span class="badge ${st}">${stLabel}</span></td>
       <td>
-        <button class="mini-btn" onclick="toggleBlock('${t.date}','${t.status}')">${t.status==='blocked'?'Desbloquear':'Bloquear'}</button>
-        <button class="mini-btn" onclick="openManualResForm('${t.date}')">Reserva manual</button>
-        <button class="mini-btn" onclick="viewPax('${t.date}')">Passageiros</button>
-        <button class="mini-btn" onclick="deleteTrip('${t.date}')">Excluir</button>
+        <button class="mini-btn" onclick="toggleBlock('${t.date}','${t.status}','${line}')">${t.status==='blocked'?'Desbloquear':'Bloquear'}</button>
+        <button class="mini-btn" onclick="openManualResForm('${t.date}','${line}')">Reserva manual</button>
+        <button class="mini-btn" onclick="viewPax('${t.date}','${line}')">Passageiros</button>
+        <button class="mini-btn" onclick="deleteTrip('${t.date}','${line}')">Excluir</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -1197,10 +1449,10 @@ async function renderAdmin(){
       const expiresLabel = (h.status==='AGUARDANDO_CONTATO'||h.status==='AGUARDANDO_PAGAMENTO') ? new Date(h.expiresAt).toLocaleString('pt-BR') : '—';
       tr.innerHTML = `
         <td>${h.code}</td>
-        <td>${new Date(h.date+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+        <td>${new Date(h.date+'T00:00:00').toLocaleDateString('pt-BR')}<br><span style="color:var(--shallow-dim); font-size:11px;">${(h.line||'signature')==='signature'?'Signature':'Explorer'}</span></td>
         <td>${escapeHtml(h.responsible.name)}<br><span style="color:var(--shallow-dim); font-size:11px;">${escapeHtml(h.responsible.phone)}</span></td>
         <td>${escapeHtml(h.responsible.cpf)}</td>
-        <td>${h.qty}</td>
+        <td>${h.qty}${gearBadge(h)}</td>
         <td><span class="badge ${STATUS_CLASS[h.status]||''}">${STATUS_LABELS[h.status]||h.status}</span></td>
         <td style="font-size:11px;">${expiresLabel}</td>
         <td>
@@ -1244,9 +1496,13 @@ async function saveHoldMinutes(){
 }
 
 let manualResDateKey = null;
-function openManualResForm(date){
+let manualResLine = 'signature';
+function openManualResForm(date, line){
   manualResDateKey = date;
-  document.getElementById('manualResDate').textContent = new Date(date+'T00:00:00').toLocaleDateString('pt-BR');
+  manualResLine = line || 'signature';
+  const lineLabel = manualResLine==='signature' ? 'Signature' : 'Explorer';
+  document.getElementById('manualResDate').textContent =
+    new Date(date+'T00:00:00').toLocaleDateString('pt-BR') + ' — ' + lineLabel;
   document.getElementById('mrName').value='';
   document.getElementById('mrPhone').value='';
   document.getElementById('mrEmail').value='';
@@ -1267,7 +1523,7 @@ async function submitManualReservation(){
   if(!qty || qty<1){ showToast('Quantidade de participantes inválida.'); return; }
 
   const { ok, status, data } = await apiSend('/api/admin/holds/manual', 'POST', {
-    date: manualResDateKey, qty, responsible: { name, phone, email, cpf }
+    date: manualResDateKey, line: manualResLine, qty, responsible: { name, phone, email, cpf }
   });
   if(!ok){
     showToast(status===409 ? 'Não há vagas suficientes nessa data.' : 'Não foi possível adicionar a reserva.');
@@ -1278,30 +1534,42 @@ async function submitManualReservation(){
   renderAdmin(); fetchTrips();
 }
 
-async function updateTripField(date, field, value){
-  const body = { date };
-  body[field] = Number(value);
+async function updateTripField(date, field, value, line){
+  const body = { date, line: line || 'signature' };
+  // destination é texto (Ilhabela/Alcatrazes); os demais campos são números.
+  body[field] = field === 'destination' ? String(value) : Number(value);
   const { ok, data } = await apiSend('/api/admin/trips', 'PATCH', body);
-  if(!ok){ showToast('Não foi possível atualizar.'); return; }
+  if(!ok){
+    showToast(data && data.error==='alcatrazes_requires_signature'
+      ? 'Alcatrazes só pode ser destino da linha Signature.'
+      : 'Não foi possível atualizar.');
+    renderAdmin();
+    return;
+  }
   showToast('Atualizado');
   renderAdmin(); fetchTrips();
 }
-async function toggleBlock(date, currentStatus){
+async function toggleBlock(date, currentStatus, line){
   const nextStatus = currentStatus==='blocked' ? 'scheduled' : 'blocked';
-  const { ok } = await apiSend('/api/admin/trips', 'PATCH', { date, status: nextStatus });
+  const { ok } = await apiSend('/api/admin/trips', 'PATCH', { date, line: line || 'signature', status: nextStatus });
   if(!ok){ showToast('Não foi possível atualizar.'); return; }
   renderAdmin(); fetchTrips();
 }
-async function deleteTrip(date){
+async function deleteTrip(date, line){
   if(!confirm('Excluir esta saída? Só é possível se não houver pré-reservas ou reservas ativas.')) return;
-  const { ok, data } = await apiSend('/api/admin/trips', 'DELETE', { date });
+  const { ok, data } = await apiSend('/api/admin/trips', 'DELETE', { date, line: line || 'signature' });
   if(!ok){ showToast(data.error==='trip_has_active_bookings' ? 'Esta saída tem reservas ativas e não pode ser excluída.' : 'Não foi possível excluir.'); return; }
   renderAdmin(); fetchTrips();
 }
-function viewPax(date){
-  const list = ADMIN_HOLDS.filter(h=>h.date===date && h.status!=='CANCELADA' && h.status!=='EXPIRADA');
+function viewPax(date, line){
+  const wanted = line || 'signature';
+  // Filtra pela linha também: no mesmo dia pode haver passageiros da
+  // Signature e da Explorer, e misturar as duas listas embarcaria gente
+  // no barco errado.
+  const list = ADMIN_HOLDS.filter(h=>h.date===date && (h.line||'signature')===wanted && h.status!=='CANCELADA' && h.status!=='EXPIRADA');
+  const lineLabel = wanted==='signature' ? 'Signature' : 'Explorer';
   if(list.length===0){ showToast('Nenhum passageiro nesta saída ainda'); return; }
-  alert('Passageiros em '+date+':\n\n'+list.map(h=>`${h.responsible.name} (${h.qty} pessoa(s), código ${h.code}, ${STATUS_LABELS[h.status]})`).join('\n'));
+  alert('Passageiros em '+date+' — '+lineLabel+':\n\n'+list.map(h=>`${h.responsible.name} (${h.qty} pessoa(s), código ${h.code}, ${STATUS_LABELS[h.status]})`).join('\n'));
 }
 async function holdAction(code, action, hours){
   const { ok, data } = await apiSend('/api/admin/holds/action', 'POST', { code, action, hours });
@@ -1313,10 +1581,37 @@ async function holdAction(code, action, hours){
 function openNewTripForm(){ document.getElementById('newTripForm').style.display='block'; }
 function closeNewTripForm(){ document.getElementById('newTripForm').style.display='none'; }
 
+// Padrões de cada linha, iguais aos do servidor. Trocar a linha no
+// formulário já ajusta preço e capacidade, para não criar uma saída
+// Explorer com 10 vagas a R$ 649 por esquecimento.
+const LINE_PRESETS = {
+  signature: { price: 649, capacity: 10 },
+  explorer:  { price: 399, capacity: 16 }
+};
+function applyLineDefaults(){
+  const line = document.getElementById('ntLine').value;
+  const preset = LINE_PRESETS[line] || LINE_PRESETS.signature;
+  document.getElementById('ntPrice').value = preset.price;
+  document.getElementById('ntCap').value = preset.capacity;
+  // Alcatrazes exige condutor credenciado pelo ICMBio: só Signature.
+  const dest = document.getElementById('ntDest');
+  const alca = dest.querySelector('option[value="Alcatrazes"]');
+  if(alca){
+    alca.disabled = line !== 'signature';
+    if(alca.disabled && dest.value === 'Alcatrazes') dest.value = 'Ilhabela';
+  }
+}
+
 async function generateWeekends(){
-  if(!confirm('Isso cria automaticamente uma saída em todo sábado e domingo dos próximos 12 meses (capacidade '+CAPACITY_DEFAULT+', preço R$ '+BASE_PRICE+'). Datas que já existem não são alteradas. Continuar?')) return;
+  const line = prompt('Gerar fins de semana para qual linha? Digite "signature" ou "explorer".', 'signature');
+  if(!line) return;
+  const norm = String(line).trim().toLowerCase();
+  if(!['signature','explorer'].includes(norm)){ showToast('Linha inválida. Use signature ou explorer.'); return; }
+  const preset = LINE_PRESETS[norm];
+  if(!confirm(`Isso cria uma saída da linha ${norm==='signature'?'Signature':'Explorer'} em todo sábado e domingo dos próximos 12 meses (capacidade ${preset.capacity}, preço R$ ${preset.price}, destino Ilhabela). Datas que já existem nessa linha não são alteradas. Continuar?`)) return;
   const { ok, data } = await apiSend('/api/admin/trips/bulk', 'POST', {
-    months: 12, capacity: CAPACITY_DEFAULT, price: BASE_PRICE, point: 'Ilhabela', daysOfWeek: [0,6]
+    months: 12, line: norm, capacity: preset.capacity, price: preset.price,
+    point: 'Ilhabela', destination: 'Ilhabela', daysOfWeek: [0,6]
   });
   if(!ok){ showToast('Não foi possível gerar as datas.'); return; }
   showToast(`${data.created} nova(s) saída(s) criada(s) (${data.skippedExisting} já existiam).`);
@@ -1324,15 +1619,23 @@ async function generateWeekends(){
 }
 async function createTrip(){
   const date = document.getElementById('ntDate').value;
-  const price = Number(document.getElementById('ntPrice').value)||BASE_PRICE;
-  const cap = Number(document.getElementById('ntCap').value)||CAPACITY_DEFAULT;
+  const line = document.getElementById('ntLine').value || 'signature';
+  const destination = document.getElementById('ntDest').value || 'Ilhabela';
+  const preset = LINE_PRESETS[line] || LINE_PRESETS.signature;
+  const price = Number(document.getElementById('ntPrice').value)||preset.price;
+  const cap = Number(document.getElementById('ntCap').value)||preset.capacity;
   const point = document.getElementById('ntPoint').value || 'Ilhabela';
   if(!date){ showToast('Escolha uma data'); return; }
-  const { ok } = await apiSend('/api/admin/trips', 'POST', { date, price, capacity:cap, point });
-  if(!ok){ showToast('Não foi possível criar a saída.'); return; }
+  const { ok, data } = await apiSend('/api/admin/trips', 'POST', { date, line, destination, price, capacity:cap, point });
+  if(!ok){
+    showToast(data && data.error==='alcatrazes_requires_signature'
+      ? 'Alcatrazes só pode ser destino da linha Signature.'
+      : 'Não foi possível criar a saída.');
+    return;
+  }
   closeNewTripForm();
   renderAdmin(); fetchTrips();
-  showToast('Nova saída criada em '+date);
+  showToast(`Nova saída ${line==='signature'?'Signature':'Explorer'} criada em ${date}`);
 }
 
 function exportCSV(){
@@ -1342,9 +1645,12 @@ function exportCSV(){
     const s = String(v ?? '');
     return /^[=+\-@\t]/.test(s) ? `'${s}` : s;
   };
-  const rows = [['Código','Data','Responsável','Telefone','CPF','Pessoas','Status']];
+  const rows = [['Código','Data','Linha','Responsável','Telefone','CPF','Pessoas','Roupa 2mm','Nadadeira','Aluguel (R$)','Status']];
   ADMIN_HOLDS.filter(h=>h.status==='CONFIRMADA').forEach(h=>{
-    rows.push([h.code, h.date, csvSafe(h.responsible.name), csvSafe(h.responsible.phone), csvSafe(h.responsible.cpf), h.qty, h.status]);
+    const lineLabel = (h.line||'signature')==='signature' ? 'Signature' : 'Explorer';
+    const g = h.gear || {};
+    rows.push([h.code, h.date, lineLabel, csvSafe(h.responsible.name), csvSafe(h.responsible.phone), csvSafe(h.responsible.cpf), h.qty,
+      g.wetsuits||0, g.fins||0, g.total||0, h.status]);
   });
   const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
