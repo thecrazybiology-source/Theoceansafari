@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='%23050b10'/><circle cx='26' cy='26' r='18.5' stroke='%234f94d4' stroke-width='4' fill='none'/><line x1='39.5' y1='39.5' x2='59' y2='59' stroke='%234f94d4' stroke-width='5' stroke-linecap='round'/></svg>">
 <title>The Ocean Safari · TheCrazyBiology · Ilhabela</title>
-<meta name="description" content="The Ocean Safari: expedições de mergulho livre e observação ética de vida marinha em Ilhabela, guiadas por um biólogo e instrutor de mergulho. Ciência, conservação e aventura.">
+<meta name="description" content="The Ocean Safari: expedições de observação ética de vida marinha em Ilhabela, guiadas por biólogos. Ciência, conservação e aventura.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -138,6 +138,17 @@
   .alca-price{ margin-top:6px; }
   .alca-price b{ font-family:var(--serif); font-size:32px; color:var(--foam); font-weight:400; }
   .alca-price span{ color:var(--shallow); font-size:14px; margin-left:8px; }
+
+  /* Bloco do que vale para as duas linhas */
+  .shared-grid{ display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+  @media (max-width:820px){ .shared-grid{ grid-template-columns:1fr; gap:26px; } }
+  .shared-item{ border-left:1px solid var(--line); padding-left:24px; }
+  .shared-item h3{ font-size:21px; color:var(--foam); margin-bottom:12px; }
+  .shared-item p{ color:var(--shallow); font-size:14.5px; line-height:1.75; }
+  /* Título de seção com o nome da linha logo abaixo, no mesmo padrão dos cartões */
+  .section-head h2 .line-suffix{
+    display:block; font-family:var(--serif); font-size:0.62em; color:var(--foam); margin-top:-2px;
+  }
 
   .ethics-note{
     margin-top:36px;
@@ -527,7 +538,7 @@
   <a href="#top" class="logo"><img src="images/logo-globe.png" width="21" height="21" alt="" style="display:block;">TheCrazyBiology</a>
   <nav>
     <a href="#sobre">Quem somos</a>
-    <a href="#experiencia">Experiência</a>
+    <a href="#signature">Experiência</a>
     <a href="#animais">Animais</a>
     <a href="#como-funciona">Como funciona</a>
     <a href="#galeria">Galeria</a>
@@ -540,7 +551,7 @@
 
 <nav class="mobile-menu" id="mobileMenu">
   <a href="#sobre">Quem somos</a>
-  <a href="#experiencia">Experiência</a>
+  <a href="#signature">Experiência</a>
   <a href="#animais">Animais</a>
   <a href="#como-funciona">Como funciona</a>
   <a href="#galeria">Galeria</a>
@@ -562,7 +573,7 @@
       <p class="hero-sub">The Ocean Safari é uma expedição de mergulho livre e observação ética de vida marinha, guiada por um biólogo e instrutor de mergulho. Não é um roteiro turístico: é um encontro real com o oceano selvagem.</p>
       <div class="hero-actions">
         <a href="booking.html" class="btn-primary">Reservar minha vaga</a>
-        <a href="#experiencia" class="btn-ghost">Ver a experiência</a>
+        <a href="#signature" class="btn-ghost">Ver a experiência</a>
       </div>
     </div>
     <div class="hero-scroll"><div class="line"></div>role para mergulhar</div>
@@ -596,17 +607,17 @@
       <div class="section-head reveal">
         <div class="eyebrow">Duas linhas, um só padrão</div>
         <h2>Escolha sua expedição</h2>
-        <p>Duas embarcações, a mesma ciência. A diferença entre as linhas está no barco, não na experiência: a expedição, o roteiro livre e a curadoria do biólogo são os mesmos.</p>
+        <p>Duas embarcações, a mesma logística. A diferença entre as linhas está no barco, não na experiência: a expedição, o roteiro livre e a curadoria do biólogo são os mesmos.</p>
       </div>
       <div class="lines-grid reveal">
         <div class="line-card">
-          <div class="line-card-media" role="img" aria-label="Lancha Victory Yachts Blue, embarcação da linha The Ocean Safari Signature, com participantes acenando em Ilhabela" style="background-image:var(--img-signature-blue);background-size:cover;background-position:center;"></div>
+          <div class="line-card-media" role="img" aria-label="Embarcação premium da linha The Ocean Safari Signature, com participantes acenando em Ilhabela" style="background-image:var(--img-signature-blue);background-size:cover;background-position:center;"></div>
           <div class="line-card-body">
             <h3>The Ocean Safari<span class="line-suffix">Signature</span></h3>
-            <p>Guiado por Daniel Munhoz, criador do @thecrazybiology. Grupos menores, embarcação mais confortável.</p>
+            <p>Guiado por Daniel Munhoz, criador do @thecrazybiology. Grupos menores, embarcação premium.</p>
             <p style="color:var(--shallow-dim); font-size:14px;">Em Ilhabela o ano todo. No verão, também em Alcatrazes.</p>
             <div class="line-card-price">R$ 649<span>/ participante</span></div>
-            <a href="#experiencia" class="btn-ghost">Conhecer a expedição</a>
+            <a href="#signature" class="btn-ghost">Conhecer a expedição</a>
           </div>
         </div>
         <div class="line-card">
@@ -615,11 +626,10 @@
             <h3>The Ocean Safari<span class="line-suffix">Explorer</span></h3>
             <p>Guiado por biólogo e instrutor de mergulho da equipe @thecrazybiology. Grupos maiores, embarcação de aventura.</p>
             <div class="line-card-price">R$ 399<span>/ participante</span></div>
-            <a href="#experiencia" class="btn-ghost">Conhecer a expedição</a>
+            <a href="#explorer" class="btn-ghost">Conhecer a expedição</a>
           </div>
         </div>
       </div>
-      <p class="ethics-note">Para proteger o bem-estar dos animais e manter a qualidade científica de cada encontro, limitamos o número de embarcações presentes em cada avistamento.</p>
     </div>
   </section>
 
@@ -650,36 +660,91 @@
   </section>
 
   <!-- EXPERIÊNCIA -->
-  <section class="section section-alt" id="experiencia">
+  <!-- LINHA SIGNATURE -->
+  <section class="section section-alt" id="signature">
     <div class="wrap">
       <div class="section-head reveal">
         <div class="eyebrow">A expedição</div>
-        <h2>The Ocean Safari</h2>
+        <h2>The Ocean Safari<span class="line-suffix">Signature</span></h2>
         <p>Uma aventura exclusiva em alto mar, sem outros barcos em volta. Você explora as partes mais intocadas de Ilhabela e busca encontros marcantes com a fauna marinha, no seu tempo, no tempo do mar.</p>
       </div>
       <div class="exp-grid reveal">
         <div class="exp-media">
-          <div role="img" aria-label="Embarcação do The Ocean Safari navegando em Ilhabela com participantes a bordo" style="width:100%;height:100%;background-image:var(--img-boat-group);background-size:cover;background-position:center;"></div>
+          <div role="img" aria-label="Embarcação premium da linha Signature, navegando em Ilhabela" style="width:100%;height:100%;background-image:var(--img-signature-blue);background-size:cover;background-position:center;"></div>
         </div>
         <div class="exp-panel">
           <h3>Saída em alto mar</h3>
           <div class="price"><b>R$ 649</b> / participante</div>
           <ul class="feat-list">
-            <li>Navegação livre, sem roteiro fixo, guiada por biólogo e instrutor de mergulho</li>
-            <li>Mergulho livre guiado com espécies não cetáceas*</li>
-            <li>Drone para procurar e fotografar os animais*</li>
+            <li>Navegação livre, sem roteiro fixo, guiada por Daniel Munhoz, criador do @thecrazybiology</li>
+            <li>Mergulho livre guiado, opcional, com espécies não cetáceas*</li>
+            <li>Drone a bordo para procurar e registrar os animais*</li>
             <li>Máscara, snorkel, snacks e bebidas sem álcool inclusos</li>
             <li>Abordagem ética e educativa, sempre priorizando o bem-estar animal</li>
           </ul>
           <div class="exp-meta">
             <div><span>Saída</span><b>06h00</b></div>
             <div><span>Retorno</span><b>12h00 · 6h de aventura</b></div>
-            <div><span>Embarque</span><b>São Sebastião ou Ilhabela</b></div>
+            <div><span>Embarcação</span><b>Premium</b></div>
             <div><span>Grupo</span><b>Até 10 participantes</b></div>
           </div>
         </div>
       </div>
       <p style="margin-top:18px; font-family:var(--mono); font-size:11px; color:var(--shallow-dim);">*Diferenciais sujeitos às condições climáticas do dia.</p>
+    </div>
+  </section>
+
+  <!-- LINHA EXPLORER -->
+  <section class="section" id="explorer">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">A expedição</div>
+        <h2>The Ocean Safari<span class="line-suffix">Explorer</span></h2>
+        <p>A mesma navegação livre pelas águas de Ilhabela, em grupo maior e a bordo de uma embarcação de aventura. Mesmo mar, mesma ciência, mesmos encontros.</p>
+      </div>
+      <div class="exp-grid reveal">
+        <div class="exp-media">
+          <div role="img" aria-label="Embarcação da linha Explorer navegando em Ilhabela com participantes a bordo" style="width:100%;height:100%;background-image:var(--img-boat-group);background-size:cover;background-position:center;"></div>
+        </div>
+        <div class="exp-panel">
+          <h3>Saída em alto mar</h3>
+          <div class="price"><b>R$ 399</b> / participante</div>
+          <ul class="feat-list">
+            <li>Navegação livre, sem roteiro fixo, guiada por biólogo e instrutor de mergulho da equipe @thecrazybiology</li>
+            <li>Mergulho livre guiado, opcional, com espécies não cetáceas*</li>
+            <li>Máscara, snorkel, snacks e bebidas sem álcool inclusos</li>
+            <li>Abordagem ética e educativa, sempre priorizando o bem-estar animal</li>
+          </ul>
+          <div class="exp-meta">
+            <div><span>Saída</span><b>06h00</b></div>
+            <div><span>Retorno</span><b>12h00 · 6h de aventura</b></div>
+            <div><span>Embarcação</span><b>De aventura</b></div>
+            <div><span>Grupo</span><b>Até 16 participantes</b></div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:18px; font-family:var(--mono); font-size:11px; color:var(--shallow-dim);">*Diferenciais sujeitos às condições climáticas do dia.</p>
+    </div>
+  </section>
+
+  <!-- O QUE VALE PARA AS DUAS LINHAS -->
+  <section class="section section-alt" id="rede">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">Vale para as duas linhas</div>
+        <h2>Um mar, dois barcos, o mesmo encontro</h2>
+      </div>
+      <div class="shared-grid reveal">
+        <div class="shared-item">
+          <h3>Rede de avistamento</h3>
+          <p>Nossas embarcações operam conectadas. Quando uma encontra vida marinha, avisa a outra na hora, e as duas vivem o mesmo encontro. Você não depende do barco em que embarcou para ver o que o mar tem a mostrar naquele dia.</p>
+        </div>
+        <div class="shared-item">
+          <h3>Imagens de drone</h3>
+          <p>O drone voa a partir da embarcação Signature, mas as imagens são de todos: participantes das duas linhas recebem o material depois da expedição. Os registros dependem dos avistamentos e das condições de mar do dia, então variam de saída para saída e não são garantidos.</p>
+        </div>
+      </div>
+      <p class="ethics-note">Para proteger o bem-estar dos animais e manter a qualidade científica de cada encontro, limitamos o número de embarcações presentes em cada avistamento.</p>
     </div>
   </section>
 
@@ -822,7 +887,7 @@
       <div class="step">
         <div class="num">03</div>
         <h4>Mar aberto</h4>
-        <p>Navegação livre, sem roteiro fixo, em busca dos encontros mais éticos com a fauna. Mergulho livre guiado quando as condições permitem.</p>
+        <p>Navegação livre, sem roteiro fixo, em busca dos encontros mais éticos com a fauna. Para quem quiser entrar na água, mergulho livre guiado quando as condições permitem.</p>
       </div>
       <div class="step">
         <div class="num">04</div>
@@ -895,7 +960,7 @@
       <div class="faq-list reveal">
         <div class="faq-item">
           <button class="faq-q">Preciso saber mergulhar?<span class="plus">+</span></button>
-          <div class="faq-a"><p>Não. A atividade principal é o mergulho livre (snorkeling), com colete ou equipamento de flutuação disponível para quem não é certificado em mergulho autônomo.</p></div>
+          <div class="faq-a"><p>Não. A atividade principal do Safari é o avistamento embarcado, mergulho livre é opcional.</p></div>
         </div>
         <div class="faq-item">
           <button class="faq-q">Há restrição de idade ou condição física?<span class="plus">+</span></button>
@@ -952,7 +1017,7 @@
   <a href="#top" class="logo"><img src="images/logo-globe.png" width="21" height="21" alt="" style="display:block;">TheCrazyBiology</a>
   <div class="fsocial">
     <a href="#sobre">Quem somos</a>
-    <a href="#experiencia">Experiência</a>
+    <a href="#signature">Experiência</a>
     <a href="products.html">The Products</a>
     <a href="#contato">Contato</a>
     <a href="privacidade.html">Privacidade</a>
