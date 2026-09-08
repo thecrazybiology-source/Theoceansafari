@@ -4,6 +4,18 @@
 // Isso existe num arquivo só de propósito: facilita publicar direto
 // pelo site do GitHub no celular, sem precisar de várias pastas.
 // ============================================================
+//
+// LINHAS (Signature / Explorer)
+// Uma saída é identificada por DATA + LINHA, não só pela data.
+//   - signature: Daniel guiando, embarcação confortável, grupos menores.
+//     Vai para Ilhabela o ano todo e, no verão, para Alcatrazes.
+//   - explorer: biólogo e instrutor da equipe, embarcação de aventura,
+//     grupos maiores. Roda em paralelo, no mesmo dia da Signature.
+// Alcatrazes NÃO é uma linha: é um destino da Signature. Por isso ele
+// é o campo `destination`, e não um terceiro valor de `line` — assim o
+// banco garante sozinho que a Signature não seja marcada para Ilhabela
+// e Alcatrazes no mesmo dia, o que seria impossível na prática.
+// ============================================================
 const crypto = require('crypto');
 const { Pool } = require('pg');
 
@@ -13,6 +25,25 @@ const { Pool } = require('pg');
 // antigos deixa de corresponder ao texto que a pessoa realmente aceitou.
 const TERMS_VERSION = '1.0';
 
+const LINES = ['signature', 'explorer'];
+const DEFAULT_LINE = 'signature';
+
+// Padrões de cada linha. Servem como fallback quando o admin cria uma
+// saída sem informar tudo — evita cadastrar Explorer com preço e
+// capacidade de Signature por esquecimento.
+const LINE_DEFAULTS = {
+  signature: { capacity: 10, price: 649, start: '06:00', end: '12:00' },
+  explorer:  { capacity: 16, price: 399, start: '06:00', end: '12:00' }
+};
+
+// Normaliza o que vier do cliente/admin. Qualquer coisa fora da lista
+// vira null, e quem chamou decide se rejeita ou usa o padrão.
+function normalizeLine(value, { fallback = null } = {}) {
+  const v = String(value || '').trim().toLowerCase();
+  if (LINES.includes(v)) return v;
+  return fallback;
+}
+
 // Gera a "impressão digital" do aceite no servidor (nunca confiando em nada
 // vindo do navegador do cliente). Amarra: versão do termo + CPF de quem
 // assinou + nome digitado como assinatura + o instante exato do aceite.
@@ -21,6 +52,29 @@ const TERMS_VERSION = '1.0';
 function generateAcceptanceHash({ termsVersion, cpf, signatureName, acceptedAt }) {
   const raw = `${termsVersion}|${String(cpf).replace(/\D/g, '')}|${signatureName.trim().toLowerCase()}|${acceptedAt}`;
   return 'sha256-' + crypto.createHash('sha256').update(raw).digest('hex');
+}
+
+// Aluguel de equipamento de mergulho. Só existe nas saídas para
+// Alcatrazes, onde há mergulho livre. Máscara e snorkel já vão inclusos
+// no passeio; o que se aluga é roupa de neoprene 2mm e nadadeira.
+// O tamanho não é escolhido aqui: a pessoa prova presencialmente antes
+// do embarque. O que importa nesta etapa é quantas peças separar.
+const GEAR_ITEM_PRICE = 60; // por peça, em reais
+
+// O total do aluguel é sempre recalculado aqui, a partir das quantidades.
+// Nunca se aceita um valor vindo do navegador: quem envia o pedido
+// poderia simplesmente mandar zero.
+function calcGearTotalCents({ wetsuits = 0, fins = 0 }) {
+  return (Number(wetsuits) + Number(fins)) * GEAR_ITEM_PRICE * 100;
+}
+
+// Normaliza uma quantidade de peças: inteiro entre 0 e o número de
+// participantes da reserva. Alugar 5 neoprenes para 2 pessoas não faz
+// sentido e provavelmente é erro ou tentativa de burlar o total.
+function normalizeGearQty(value, maxQty) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, maxQty);
 }
 
 function normalizeName(name) {
@@ -118,13 +172,23 @@ async function tripsGet(req, res) {
   const pool = getPool();
   const from = req.query.from || new Date().toISOString().slice(0, 10);
   const to = req.query.to;
+  // ?line=explorer filtra uma linha só. Sem o parâmetro, devolve todas —
+  // que é o que o calendário do site usa, para mostrar num mesmo dia o
+  // que está disponível em cada linha.
+  const lineFilter = normalizeLine(req.query.line);
+
   const params = [from];
-  let sql = `SELECT date, start_time, end_time, meeting_point, price_cents, capacity, confirmed, held, status FROM trips WHERE date >= $1`;
-  if (to) { params.push(to); sql += ` AND date <= $2`; }
-  sql += ' ORDER BY date ASC';
+  let sql = `SELECT date, line, destination, start_time, end_time, meeting_point,
+                    price_cents, capacity, confirmed, held, status
+             FROM trips WHERE date >= $1`;
+  if (to) { params.push(to); sql += ` AND date <= $${params.length}`; }
+  if (lineFilter) { params.push(lineFilter); sql += ` AND line = $${params.length}`; }
+  sql += ' ORDER BY date ASC, line ASC';
+
   const { rows } = await pool.query(sql, params);
   const trips = rows.map((t) => ({
-    date: dateStr(t.date), start: t.start_time, end: t.end_time, point: t.meeting_point,
+    date: dateStr(t.date), line: t.line, destination: t.destination || 'Ilhabela',
+    start: t.start_time, end: t.end_time, point: t.meeting_point,
     price: t.price_cents / 100, capacity: t.capacity,
     available: t.status === 'blocked' ? 0 : Math.max(0, t.capacity - t.confirmed - t.held),
     status: t.status
@@ -137,6 +201,12 @@ async function holdsPost(req, res) {
   const { date, qty, responsible, participants, healthAnswer, healthNote, healthConsent, signatureName } = body;
 
   if (!date || !qty || !Number.isInteger(qty) || qty < 1) return res.status(400).json({ error: 'invalid_date_or_qty' });
+
+  // Sem linha válida não dá para saber qual saída reservar: duas podem
+  // existir na mesma data. Reservas antigas eram todas Signature, então
+  // é esse o padrão quando o campo não vem.
+  const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
+
   if (!responsible || !responsible.name || !responsible.phone || !responsible.cpf) return res.status(400).json({ error: 'missing_responsible_data' });
   if (!isValidCpfFormat(responsible.cpf)) return res.status(400).json({ error: 'invalid_cpf_format' });
   if (healthConsent !== true) return res.status(400).json({ error: 'health_consent_required' });
@@ -161,10 +231,20 @@ async function holdsPost(req, res) {
     await client.query('BEGIN');
     const holdRes = await client.query(
       `UPDATE trips SET held = held + $1, updated_at = now()
-       WHERE date = $2 AND status = 'scheduled' AND (capacity - confirmed - held) >= $1
-       RETURNING date`, [qty, date]
+       WHERE date = $2 AND line = $3 AND status = 'scheduled' AND (capacity - confirmed - held) >= $1
+       RETURNING date, destination`, [qty, date, line]
     );
     if (holdRes.rowCount === 0) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'not_enough_availability' }); }
+
+    // Aluguel de equipamento só existe em Alcatrazes. Quem é a autoridade
+    // sobre isso é a saída gravada no banco, não o que o formulário diz —
+    // assim uma reserva de Ilhabela não vem com R$ 120 de aluguel colado.
+    const destination = holdRes.rows[0].destination || 'Ilhabela';
+    const gearAllowed = String(destination).toLowerCase() === 'alcatrazes';
+    const gear = (body.gear && typeof body.gear === 'object') ? body.gear : {};
+    const gearWetsuits = gearAllowed ? normalizeGearQty(gear.wetsuits, qty) : 0;
+    const gearFins = gearAllowed ? normalizeGearQty(gear.fins, qty) : 0;
+    const gearTotalCents = calcGearTotalCents({ wetsuits: gearWetsuits, fins: gearFins });
 
     const seqRes = await client.query(`SELECT nextval('hold_code_seq') AS n`);
     const year = new Date(`${date}T00:00:00Z`).getUTCFullYear();
@@ -175,17 +255,23 @@ async function holdsPost(req, res) {
     const ua = req.headers['user-agent'] || '';
 
     const insertRes = await client.query(
-      `INSERT INTO holds (code, trip_date, qty, status, responsible_name, responsible_email, responsible_phone,
+      `INSERT INTO holds (code, trip_date, trip_line, qty, status, responsible_name, responsible_email, responsible_phone,
          responsible_cpf, participants, health_answer, health_note, health_consent, terms_version,
-         terms_accepted_at, terms_document_hash, accept_ip, accept_user_agent, expires_at)
-       VALUES ($1,$2,$3,'AGUARDANDO_CONTATO',$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+         terms_accepted_at, terms_document_hash, accept_ip, accept_user_agent, expires_at,
+         gear_wetsuits, gear_fins, gear_total_cents)
+       VALUES ($1,$2,$3,$4,'AGUARDANDO_CONTATO',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
        RETURNING code, expires_at`,
-      [code, date, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf,
+      [code, date, line, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf,
         JSON.stringify(participants || []), healthAnswer === true, healthNote || null, healthConsent === true,
-        TERMS_VERSION, acceptedAt, documentHash, ip, ua, expiresAt]
+        TERMS_VERSION, acceptedAt, documentHash, ip, ua, expiresAt,
+        gearWetsuits, gearFins, gearTotalCents]
     );
     await client.query('COMMIT');
-    res.status(201).json({ code: insertRes.rows[0].code, expiresAt: insertRes.rows[0].expires_at, status: 'AGUARDANDO_CONTATO' });
+    res.status(201).json({
+      code: insertRes.rows[0].code, expiresAt: insertRes.rows[0].expires_at, line,
+      gear: { wetsuits: gearWetsuits, fins: gearFins, total: gearTotalCents / 100 },
+      status: 'AGUARDANDO_CONTATO'
+    });
   } catch (err) {
     await client.query('ROLLBACK'); console.error('holdsPost', err);
     res.status(500).json({ error: 'internal_error' });
@@ -198,7 +284,9 @@ async function holdsStatusGet(req, res) {
   if (!code) return res.status(400).json({ error: 'missing_code' });
   if (!email) return res.status(400).json({ error: 'missing_email' });
   const pool = getPool();
-  const { rows } = await pool.query(`SELECT code, trip_date, qty, status, expires_at, responsible_email FROM holds WHERE code = $1`, [code]);
+  const { rows } = await pool.query(
+    `SELECT code, trip_date, trip_line, qty, status, expires_at, responsible_email FROM holds WHERE code = $1`, [code]
+  );
   if (!rows.length) return res.status(404).json({ error: 'not_found' });
   const h = rows[0];
   // Reservas do fluxo público sempre têm e-mail cadastrado: exige que bata.
@@ -207,7 +295,10 @@ async function holdsStatusGet(req, res) {
   if (h.responsible_email && h.responsible_email.trim().toLowerCase() !== email) {
     return res.status(404).json({ error: 'not_found' });
   }
-  res.status(200).json({ code: h.code, date: dateStr(h.trip_date), qty: h.qty, status: h.status, expiresAt: h.expires_at });
+  res.status(200).json({
+    code: h.code, date: dateStr(h.trip_date), line: h.trip_line || DEFAULT_LINE,
+    qty: h.qty, status: h.status, expiresAt: h.expires_at
+  });
 }
 
 // ============================================================
@@ -244,60 +335,101 @@ async function adminSettings(req, res) {
 async function adminTrips(req, res) {
   const pool = getPool();
   if (req.method === 'GET') {
-    const { rows } = await pool.query(`SELECT * FROM trips ORDER BY date ASC`);
+    const { rows } = await pool.query(`SELECT * FROM trips ORDER BY date ASC, line ASC`);
     return res.status(200).json({
       trips: rows.map((t) => ({
-        date: dateStr(t.date), start: t.start_time, end: t.end_time, point: t.meeting_point,
+        date: dateStr(t.date), line: t.line, destination: t.destination || 'Ilhabela',
+        start: t.start_time, end: t.end_time, point: t.meeting_point,
         price: t.price_cents / 100, capacity: t.capacity, confirmed: t.confirmed, held: t.held, status: t.status
       }))
     });
   }
   if (req.method === 'POST') {
-    const { date, capacity, start, end, point, price } = readBody(req);
-    if (!date || !capacity || capacity < 1) return res.status(400).json({ error: 'missing_or_invalid_fields' });
+    const body = readBody(req);
+    const { date, capacity, start, end, point, price, destination } = body;
+    const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
+    if (!date) return res.status(400).json({ error: 'missing_or_invalid_fields' });
+
+    const defaults = LINE_DEFAULTS[line];
+    const cap = Number(capacity) > 0 ? Number(capacity) : defaults.capacity;
+    const priceValue = Number(price) > 0 ? Number(price) : defaults.price;
+    const dest = String(destination || 'Ilhabela').trim() || 'Ilhabela';
+
+    // Alcatrazes é destino exclusivo da Signature: exige condutor
+    // credenciado pelo ICMBio, que é o Daniel. Barrar aqui evita que a
+    // saída seja cadastrada errada e apareça à venda por engano.
+    if (dest.toLowerCase() === 'alcatrazes' && line !== 'signature') {
+      return res.status(400).json({ error: 'alcatrazes_requires_signature' });
+    }
+
     await pool.query(
-      `INSERT INTO trips (date, start_time, end_time, meeting_point, price_cents, capacity)
-       VALUES ($1,$2,$3,$4,$5,$6)
-       ON CONFLICT (date) DO UPDATE SET capacity=EXCLUDED.capacity, start_time=EXCLUDED.start_time,
-         end_time=EXCLUDED.end_time, meeting_point=EXCLUDED.meeting_point, price_cents=EXCLUDED.price_cents, updated_at=now()`,
-      [date, start || '06:00', end || '12:00', point || 'Ilhabela', Math.round((price || 649) * 100), capacity]
+      `INSERT INTO trips (date, line, destination, start_time, end_time, meeting_point, price_cents, capacity)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       ON CONFLICT (date, line) DO UPDATE SET capacity=EXCLUDED.capacity, start_time=EXCLUDED.start_time,
+         end_time=EXCLUDED.end_time, meeting_point=EXCLUDED.meeting_point, destination=EXCLUDED.destination,
+         price_cents=EXCLUDED.price_cents, updated_at=now()`,
+      [date, line, dest, start || defaults.start, end || defaults.end,
+        point || 'Ilhabela', Math.round(priceValue * 100), cap]
     );
-    return res.status(201).json({ ok: true });
+    return res.status(201).json({ ok: true, line });
   }
   if (req.method === 'PATCH') {
-    const { date, capacity, price, status } = readBody(req);
+    const body = readBody(req);
+    const { date, capacity, price, status, destination } = body;
+    const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
     if (!date) return res.status(400).json({ error: 'missing_date' });
+
+    if (destination && String(destination).toLowerCase() === 'alcatrazes' && line !== 'signature') {
+      return res.status(400).json({ error: 'alcatrazes_requires_signature' });
+    }
+
     const fields = [], values = []; let i = 1;
     if (capacity != null) { fields.push(`capacity = $${i++}`); values.push(capacity); }
     if (price != null) { fields.push(`price_cents = $${i++}`); values.push(Math.round(price * 100)); }
+    if (destination != null) { fields.push(`destination = $${i++}`); values.push(String(destination)); }
     if (status) {
       if (!['scheduled', 'blocked'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
       fields.push(`status = $${i++}`); values.push(status);
     }
     if (!fields.length) return res.status(400).json({ error: 'nothing_to_update' });
-    values.push(date);
-    const result = await pool.query(`UPDATE trips SET ${fields.join(', ')}, updated_at = now() WHERE date = $${i}`, values);
+    values.push(date, line);
+    const result = await pool.query(
+      `UPDATE trips SET ${fields.join(', ')}, updated_at = now() WHERE date = $${i++} AND line = $${i}`, values
+    );
     if (result.rowCount === 0) return res.status(404).json({ error: 'trip_not_found' });
     return res.status(200).json({ ok: true });
   }
   if (req.method === 'DELETE') {
-    const { date } = readBody(req);
+    const body = readBody(req);
+    const { date } = body;
+    const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
     if (!date) return res.status(400).json({ error: 'missing_date' });
-    const { rows } = await pool.query(`SELECT held, confirmed FROM trips WHERE date = $1`, [date]);
+    const { rows } = await pool.query(`SELECT held, confirmed FROM trips WHERE date = $1 AND line = $2`, [date, line]);
     if (!rows.length) return res.status(404).json({ error: 'trip_not_found' });
     if (rows[0].held > 0 || rows[0].confirmed > 0) return res.status(409).json({ error: 'trip_has_active_bookings' });
-    await pool.query(`DELETE FROM trips WHERE date = $1`, [date]);
+    await pool.query(`DELETE FROM trips WHERE date = $1 AND line = $2`, [date, line]);
     return res.status(200).json({ ok: true });
   }
   res.status(405).json({ error: 'method_not_allowed' });
 }
 
 async function adminTripsBulkPost(req, res) {
-  const { months, capacity, price, point, daysOfWeek } = readBody(req);
+  const body = readBody(req);
+  const { months, capacity, price, point, daysOfWeek, destination } = body;
+  const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
+  const defaults = LINE_DEFAULTS[line];
+
   const monthsAhead = Number(months) > 0 ? Number(months) : 12;
-  const cap = Number(capacity) > 0 ? Number(capacity) : 10;
-  const priceCents = Math.round((Number(price) > 0 ? Number(price) : 649) * 100);
+  const cap = Number(capacity) > 0 ? Number(capacity) : defaults.capacity;
+  const priceCents = Math.round((Number(price) > 0 ? Number(price) : defaults.price) * 100);
   const dows = Array.isArray(daysOfWeek) && daysOfWeek.length ? daysOfWeek : [0, 6];
+  const dest = String(destination || 'Ilhabela').trim() || 'Ilhabela';
+
+  // Alcatrazes depende de autorização do ICMBio, data a data. Criar em
+  // lote abriria à venda datas que ainda não foram autorizadas.
+  if (dest.toLowerCase() === 'alcatrazes') {
+    return res.status(400).json({ error: 'alcatrazes_bulk_not_allowed' });
+  }
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const limit = new Date(today); limit.setMonth(limit.getMonth() + monthsAhead);
@@ -312,14 +444,14 @@ async function adminTripsBulkPost(req, res) {
     let created = 0;
     for (const date of dates) {
       const result = await client.query(
-        `INSERT INTO trips (date, start_time, end_time, meeting_point, price_cents, capacity)
-         VALUES ($1,'06:00','12:00',$2,$3,$4) ON CONFLICT (date) DO NOTHING`,
-        [date, point || 'Ilhabela', priceCents, cap]
+        `INSERT INTO trips (date, line, destination, start_time, end_time, meeting_point, price_cents, capacity)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (date, line) DO NOTHING`,
+        [date, line, dest, defaults.start, defaults.end, point || 'Ilhabela', priceCents, cap]
       );
       created += result.rowCount;
     }
     await client.query('COMMIT');
-    res.status(200).json({ ok: true, requested: dates.length, created, skippedExisting: dates.length - created });
+    res.status(200).json({ ok: true, line, requested: dates.length, created, skippedExisting: dates.length - created });
   } catch (err) {
     await client.query('ROLLBACK'); console.error('adminTripsBulkPost', err);
     res.status(500).json({ error: 'internal_error' });
@@ -331,9 +463,10 @@ async function adminHoldsGet(req, res) {
   const { rows } = await pool.query(`SELECT * FROM holds ORDER BY created_at DESC LIMIT 500`);
   res.status(200).json({
     holds: rows.map((h) => ({
-      code: h.code, date: dateStr(h.trip_date), qty: h.qty, status: h.status,
+      code: h.code, date: dateStr(h.trip_date), line: h.trip_line || DEFAULT_LINE, qty: h.qty, status: h.status,
       responsible: { name: h.responsible_name, email: h.responsible_email, phone: h.responsible_phone, cpf: h.responsible_cpf },
       participants: h.participants, healthAnswer: h.health_answer, healthNote: h.health_note,
+      gear: { wetsuits: h.gear_wetsuits || 0, fins: h.gear_fins || 0, total: (h.gear_total_cents || 0) / 100 },
       termsVersion: h.terms_version, termsAcceptedAt: h.terms_accepted_at, documentHash: h.terms_document_hash,
       acceptIp: h.accept_ip, acceptUserAgent: h.accept_user_agent, createdAt: h.created_at, expiresAt: h.expires_at,
       confirmedAt: h.confirmed_at, cancelledAt: h.cancelled_at, adminNotes: h.admin_notes
@@ -351,14 +484,18 @@ async function adminHoldsActionPost(req, res) {
     const { rows } = await client.query(`SELECT * FROM holds WHERE code = $1 FOR UPDATE`, [String(code).toUpperCase()]);
     if (!rows.length) { await client.query('ROLLBACK'); return res.status(404).json({ error: 'not_found' }); }
     const hold = rows[0];
+    // A saída a devolver/ocupar é sempre a da MESMA linha da reserva.
+    // Sem isso, confirmar uma reserva Explorer daria baixa na vaga da
+    // Signature do mesmo dia, e as duas contagens ficariam erradas.
+    const holdLine = hold.trip_line || DEFAULT_LINE;
 
     if (action === 'confirm') {
       if (!ACTIVE_STATUSES.includes(hold.status)) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'invalid_state', current: hold.status }); }
-      await client.query(`UPDATE trips SET held = GREATEST(held - $1, 0), confirmed = confirmed + $1, updated_at = now() WHERE date = $2`, [hold.qty, hold.trip_date]);
+      await client.query(`UPDATE trips SET held = GREATEST(held - $1, 0), confirmed = confirmed + $1, updated_at = now() WHERE date = $2 AND line = $3`, [hold.qty, hold.trip_date, holdLine]);
       await client.query(`UPDATE holds SET status = 'CONFIRMADA', confirmed_at = now() WHERE code = $1`, [hold.code]);
     } else if (action === 'cancel') {
-      if (hold.status === 'CONFIRMADA') await client.query(`UPDATE trips SET confirmed = GREATEST(confirmed - $1, 0), updated_at = now() WHERE date = $2`, [hold.qty, hold.trip_date]);
-      else if (ACTIVE_STATUSES.includes(hold.status)) await client.query(`UPDATE trips SET held = GREATEST(held - $1, 0), updated_at = now() WHERE date = $2`, [hold.qty, hold.trip_date]);
+      if (hold.status === 'CONFIRMADA') await client.query(`UPDATE trips SET confirmed = GREATEST(confirmed - $1, 0), updated_at = now() WHERE date = $2 AND line = $3`, [hold.qty, hold.trip_date, holdLine]);
+      else if (ACTIVE_STATUSES.includes(hold.status)) await client.query(`UPDATE trips SET held = GREATEST(held - $1, 0), updated_at = now() WHERE date = $2 AND line = $3`, [hold.qty, hold.trip_date, holdLine]);
       await client.query(`UPDATE holds SET status = 'CANCELADA', cancelled_at = now() WHERE code = $1`, [hold.code]);
     } else if (action === 'extend') {
       if (!ACTIVE_STATUSES.includes(hold.status)) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'invalid_state', current: hold.status }); }
@@ -368,10 +505,10 @@ async function adminHoldsActionPost(req, res) {
       if (!VALID_STATUSES.includes(status)) { await client.query('ROLLBACK'); return res.status(400).json({ error: 'invalid_status' }); }
       const wasActive = ACTIVE_STATUSES.includes(hold.status), wasConfirmed = hold.status === 'CONFIRMADA';
       const willBeActive = ACTIVE_STATUSES.includes(status), willBeConfirmed = status === 'CONFIRMADA';
-      if (wasConfirmed && !willBeConfirmed) await client.query(`UPDATE trips SET confirmed = GREATEST(confirmed - $1, 0), updated_at = now() WHERE date = $2`, [hold.qty, hold.trip_date]);
-      if (wasActive && !willBeActive) await client.query(`UPDATE trips SET held = GREATEST(held - $1, 0), updated_at = now() WHERE date = $2`, [hold.qty, hold.trip_date]);
-      if (!wasConfirmed && willBeConfirmed) await client.query(`UPDATE trips SET confirmed = confirmed + $1, updated_at = now() WHERE date = $2`, [hold.qty, hold.trip_date]);
-      if (!wasActive && willBeActive) await client.query(`UPDATE trips SET held = held + $1, updated_at = now() WHERE date = $2`, [hold.qty, hold.trip_date]);
+      if (wasConfirmed && !willBeConfirmed) await client.query(`UPDATE trips SET confirmed = GREATEST(confirmed - $1, 0), updated_at = now() WHERE date = $2 AND line = $3`, [hold.qty, hold.trip_date, holdLine]);
+      if (wasActive && !willBeActive) await client.query(`UPDATE trips SET held = GREATEST(held - $1, 0), updated_at = now() WHERE date = $2 AND line = $3`, [hold.qty, hold.trip_date, holdLine]);
+      if (!wasConfirmed && willBeConfirmed) await client.query(`UPDATE trips SET confirmed = confirmed + $1, updated_at = now() WHERE date = $2 AND line = $3`, [hold.qty, hold.trip_date, holdLine]);
+      if (!wasActive && willBeActive) await client.query(`UPDATE trips SET held = held + $1, updated_at = now() WHERE date = $2 AND line = $3`, [hold.qty, hold.trip_date, holdLine]);
       await client.query(`UPDATE holds SET status = $1 WHERE code = $2`, [status, hold.code]);
     } else { await client.query('ROLLBACK'); return res.status(400).json({ error: 'unknown_action' }); }
 
@@ -384,7 +521,9 @@ async function adminHoldsActionPost(req, res) {
 }
 
 async function adminHoldsManualPost(req, res) {
-  const { date, qty, responsible, adminNotes } = readBody(req);
+  const body = readBody(req);
+  const { date, qty, responsible, adminNotes } = body;
+  const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
   if (!date || !qty || !Number.isInteger(qty) || qty < 1) return res.status(400).json({ error: 'invalid_date_or_qty' });
   if (!responsible || !responsible.name || !responsible.phone) return res.status(400).json({ error: 'missing_responsible_data' });
 
@@ -394,7 +533,7 @@ async function adminHoldsManualPost(req, res) {
     await client.query('BEGIN');
     const upd = await client.query(
       `UPDATE trips SET confirmed = confirmed + $1, updated_at = now()
-       WHERE date = $2 AND (capacity - confirmed - held) >= $1 RETURNING date`, [qty, date]
+       WHERE date = $2 AND line = $3 AND (capacity - confirmed - held) >= $1 RETURNING date`, [qty, date, line]
     );
     if (upd.rowCount === 0) { await client.query('ROLLBACK'); return res.status(409).json({ error: 'not_enough_availability' }); }
 
@@ -403,14 +542,14 @@ async function adminHoldsManualPost(req, res) {
     const code = genCode(year, seqRes.rows[0].n);
 
     const insertRes = await client.query(
-      `INSERT INTO holds (code, trip_date, qty, status, responsible_name, responsible_email, responsible_phone,
+      `INSERT INTO holds (code, trip_date, trip_line, qty, status, responsible_name, responsible_email, responsible_phone,
          responsible_cpf, terms_version, terms_accepted_at, expires_at, confirmed_at, admin_notes)
-       VALUES ($1,$2,$3,'CONFIRMADA',$4,$5,$6,$7,'MANUAL', now(), now(), now(), $8) RETURNING code`,
-      [code, date, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf || null,
+       VALUES ($1,$2,$3,$4,'CONFIRMADA',$5,$6,$7,$8,'MANUAL', now(), now(), now(), $9) RETURNING code`,
+      [code, date, line, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf || null,
         adminNotes || 'Reserva fechada diretamente pelo WhatsApp e lançada manualmente pelo admin.']
     );
     await client.query('COMMIT');
-    res.status(201).json({ code: insertRes.rows[0].code, status: 'CONFIRMADA' });
+    res.status(201).json({ code: insertRes.rows[0].code, line, status: 'CONFIRMADA' });
   } catch (err) {
     await client.query('ROLLBACK'); console.error('adminHoldsManualPost', err);
     res.status(500).json({ error: 'internal_error' });
@@ -429,10 +568,13 @@ async function cronExpire(req, res) {
   try {
     await client.query('BEGIN');
     const { rows } = await client.query(
-      `SELECT code, trip_date, qty FROM holds WHERE status IN ('AGUARDANDO_CONTATO','AGUARDANDO_PAGAMENTO') AND expires_at < now() FOR UPDATE`
+      `SELECT code, trip_date, trip_line, qty FROM holds WHERE status IN ('AGUARDANDO_CONTATO','AGUARDANDO_PAGAMENTO') AND expires_at < now() FOR UPDATE`
     );
     for (const h of rows) {
-      await client.query(`UPDATE trips SET held = GREATEST(held - $1, 0), updated_at = now() WHERE date = $2`, [h.qty, h.trip_date]);
+      await client.query(
+        `UPDATE trips SET held = GREATEST(held - $1, 0), updated_at = now() WHERE date = $2 AND line = $3`,
+        [h.qty, h.trip_date, h.trip_line || DEFAULT_LINE]
+      );
       await client.query(`UPDATE holds SET status = 'EXPIRADA' WHERE code = $1`, [h.code]);
     }
     await client.query('COMMIT');
