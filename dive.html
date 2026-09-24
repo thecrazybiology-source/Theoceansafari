@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<!--
+   Oh yes 🤿
+   Se você chegou até aqui olhando o código-fonte, meus parabéns!
+   — Daniel Munhoz, The Ocean Dive · Ilhabela
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#020308">
+<title>The Ocean Dive · Mergulho de cilindro em Ilhabela · TheCrazyBiology</title>
+<meta name="description" content="Mergulho de cilindro para iniciantes na Ilha das Cabras, Ilhabela, guiado por Daniel Munhoz, biólogo e instrutor de mergulho. Sem experiência prévia, até 7 metros, no máximo 4 participantes.">
+<meta property="og:title" content="The Ocean Dive · Ilhabela">
+<meta property="og:description" content="Mergulhe de cilindro em um santuário marinho com um biólogo e instrutor de mergulho.">
+<meta property="og:image" content="images/dive-tartaruga-mergulhadora.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --abyss:#020308;
+    --deep:#0a1330;
+    --deep-2:#0d1a3d;
+    --foam:#eef0f5;
+    --shallow:#9aa5c0;
+    --shallow-dim:#5b6687;
+    --amber:#b8c6ff;
+    --amber-dim:#7d8fd8;
+    --line: rgba(238,240,245,0.1);
+    --serif: 'Instrument Serif', serif;
+    --sans: 'Hanken Grotesk', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--abyss);
+    color:var(--foam);
+    font-family:var(--sans);
+    font-weight:300;
+    line-height:1.6;
+    overflow-x:hidden;
+  }
+  ::selection{ background:var(--amber); color:var(--abyss); }
+  img{display:block; width:100%; height:100%; object-fit:cover;}
+  a{color:inherit; text-decoration:none;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--amber);
+    display:flex; align-items:center; gap:12px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:24px; height:1px;
+    background:var(--amber);
+  }
+  h1,h2,h3{ font-family:var(--serif); font-weight:400; letter-spacing:-0.01em; }
+  .wrap{ max-width:1240px; margin:0 auto; padding:0 6vw; }
+  section{ position:relative; }
+
+  /* ---------- Choose your expedition (line cards) ---------- */
+  .lines-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
+  }
+  @media (max-width:820px){ .lines-grid{ grid-template-columns:1fr; } }
+  .line-card{
+    position:relative;
+    border:1px solid var(--line);
+    background:var(--deep-2);
+    border-radius:2px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transition:border-color .3s ease, transform .3s ease;
+  }
+  .line-card:hover{ border-color:var(--shallow-dim); transform:translateY(-3px); }
+  .line-card-media{ height:280px; position:relative; }
+  .line-card-body{ padding:32px 30px 34px; display:flex; flex-direction:column; gap:14px; flex:1; }
+  .line-card-tag{
+    font-family:var(--mono); font-size:11px; letter-spacing:.24em; text-transform:uppercase; color:var(--shallow);
+  }
+  .line-card h3{ font-size:26px; color:var(--foam); line-height:1.1; }
+  .line-card h3 .line-suffix{
+    display:block;
+    font-family:var(--serif);
+    font-size:17px;
+    color:var(--foam);
+    margin-top:-2px;
+  }
+  .line-card p{ color:var(--shallow); font-size:15px; line-height:1.65; }
+  .line-card-price{
+    font-family:var(--serif);
+    font-size:26px;
+    color:var(--foam);
+    margin-top:4px;
+  }
+  .line-card-price span{ font-family:var(--sans); font-size:13px; color:var(--shallow); margin-left:7px; }
+  .line-card .btn-ghost, .line-card .btn-primary{ margin-top:auto; align-self:flex-start; }
+  .alca-grid{
+    display:grid;
+    grid-template-columns:1.05fr 1fr;
+    gap:0;
+    border:1px solid var(--line);
+    background:var(--deep-2);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  @media (max-width:900px){ .alca-grid{ grid-template-columns:1fr; } }
+  .alca-media{ min-height:340px; }
+  .alca-body{ padding:46px 42px 48px; display:flex; flex-direction:column; gap:18px; }
+  @media (max-width:900px){ .alca-body{ padding:34px 28px 38px; } }
+  .alca-body h2{ font-size:clamp(26px,3.4vw,38px); color:var(--foam); line-height:1.1; }
+  .alca-body h2 .line-suffix{ display:block; font-family:var(--serif); font-size:1em; color:var(--foam); margin-top:-2px; }
+  .alca-body p{ color:var(--shallow); font-size:15px; line-height:1.7; }
+  .alca-price{ margin-top:6px; }
+  .alca-price b{ font-family:var(--serif); font-size:32px; color:var(--foam); font-weight:400; }
+  .alca-price span{ color:var(--shallow); font-size:14px; margin-left:8px; }
+
+  /* Bloco do que vale para as duas linhas */
+  .shared-grid{ display:grid; grid-template-columns:1fr 1fr; gap:32px; }
+  @media (max-width:820px){ .shared-grid{ grid-template-columns:1fr; gap:26px; } }
+  .shared-item{ border-left:1px solid var(--line); padding-left:24px; }
+  .shared-item h3{ font-size:21px; color:var(--foam); margin-bottom:12px; }
+  .shared-item p{ color:var(--shallow); font-size:14.5px; line-height:1.75; }
+  /* Título de seção com o nome da linha logo abaixo, no mesmo padrão dos cartões */
+  .section-head h2 .line-suffix{
+    display:block; font-family:var(--serif); font-size:0.62em; color:var(--foam); margin-top:-2px;
+  }
+
+  /* Na imprensa */
+  .press-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:820px){ .press-grid{ grid-template-columns:1fr; gap:14px; } }
+  .press-item{
+    display:flex; flex-direction:column; gap:10px;
+    border:1px solid var(--line); border-radius:2px;
+    padding:22px 22px 24px;
+    transition:border-color .25s ease, transform .25s ease;
+  }
+  .press-item:hover{ border-color:var(--shallow-dim); transform:translateY(-2px); }
+  .press-outlet{
+    font-family:var(--mono); font-size:11px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--shallow);
+  }
+  .press-title{ font-family:var(--serif); font-size:17px; line-height:1.35; color:var(--foam); }
+  /* Destaque: reportagem de TV */
+  .press-feature{
+    display:flex; flex-direction:column; gap:14px;
+    border:1px solid var(--shallow-dim); border-radius:2px;
+    padding:32px 30px 34px; margin-bottom:22px;
+    transition:border-color .25s ease, transform .25s ease;
+  }
+  .press-feature:hover{ border-color:var(--foam); transform:translateY(-2px); }
+  .press-feature-title{ font-family:var(--serif); font-size:23px; line-height:1.3; color:var(--foam); }
+  @media (max-width:820px){ .press-feature-title{ font-size:20px; } }
+  .press-watch{
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--foam); border-bottom:1px solid var(--foam); padding-bottom:3px; align-self:flex-start;
+  }
+
+  /* Para quem é esta expedição */
+  .quem-box{
+    max-width:720px;
+    border-left:2px solid var(--amber);
+    padding-left:28px;
+    display:flex; flex-direction:column; gap:18px;
+  }
+  @media (max-width:820px){ .quem-box{ padding-left:20px; } }
+  .quem-box p{ color:var(--shallow); font-size:15.5px; line-height:1.75; }
+  .quem-box .quem-close{ color:var(--foam); font-family:var(--serif); font-size:19px; line-height:1.5; }
+
+  .ethics-note{
+    margin-top:36px;
+    padding-top:28px;
+    border-top:1px solid var(--line);
+    color:var(--shallow);
+    font-size:14px;
+    max-width:640px;
+    line-height:1.7;
+  }
+
+  /* ---------- Depth gauge (signature element) ---------- */
+  #depth-gauge{
+    position:fixed;
+    right:28px; top:0;
+    height:100vh;
+    width:70px;
+    z-index:60;
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center;
+    pointer-events:none;
+  }
+  .gauge-track{
+    position:relative;
+    width:1px; height:46vh;
+    background:linear-gradient(to bottom, transparent, var(--line) 10%, var(--line) 90%, transparent);
+  }
+  .gauge-fill{
+    position:absolute; left:0; top:0; width:1px; height:0%;
+    background:var(--amber);
+    transition:height .15s linear;
+  }
+  .gauge-dot{
+    position:absolute; left:50%; transform:translate(-50%,-50%); top:0%;
+    width:6px; height:6px; border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 8px 2px rgba(184,198,255,.6);
+    transition:top .15s linear;
+  }
+  .gauge-label{
+    font-family:var(--mono); font-size:10px; letter-spacing:.15em;
+    color:var(--shallow); margin-top:14px; text-align:center; white-space:nowrap;
+  }
+  .gauge-value{ color:var(--amber); font-size:11px; margin-bottom:14px; }
+  @media (max-width:900px){ #depth-gauge{display:none;} }
+
+  /* ---------- Nav ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    padding:12px 6vw;
+    display:flex; align-items:center; justify-content:space-between;
+    mix-blend-mode:normal;
+    transition:background .3s ease, border-color .3s ease, backdrop-filter .3s ease;
+    border-bottom:1px solid transparent;
+  }
+  header.scrolled{
+    background:rgba(2,3,8,0.78);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .logo{
+    font-family:var(--sans); font-size:17px; letter-spacing:-0.01em; font-weight:700;
+    display:inline-flex; align-items:center; gap:9px; color:var(--foam);
+  }
+  .logo img, .logo .logo-img{ width:auto; height:48px; flex-shrink:0; object-fit:contain; display:block; }
+  nav{ display:flex; gap:28px; }
+  nav a{
+    font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--shallow); position:relative; padding-bottom:4px;
+  }
+  nav a:hover{ color:var(--foam); }
+  .nav-cta{
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    border:1px solid var(--amber-dim); color:var(--amber);
+    padding:9px 18px; border-radius:2px; transition:all .25s ease;
+  }
+  .nav-cta:hover{ background:var(--amber); color:var(--abyss); border-color:var(--amber); }
+  .nav-toggle{ display:none; background:none; border:none; color:var(--foam); font-size:22px; cursor:pointer; z-index:70; position:relative; }
+  @media (max-width:900px){
+    nav{ display:none; }
+    .nav-cta{ display:none; }
+    .nav-toggle{ display:block; }
+  }
+
+  /* ---------- Mobile menu ---------- */
+  .mobile-menu{
+    position:fixed; inset:0; z-index:65;
+    background:rgba(2,3,8,0.97); backdrop-filter:blur(10px);
+    display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+    gap:28px; padding:0 10vw;
+    opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  .mobile-menu.open{ opacity:1; pointer-events:auto; }
+  .mobile-menu a{
+    font-family:var(--serif); font-size:28px; color:var(--foam);
+  }
+  .mobile-menu a.mobile-cta{
+    font-family:var(--mono); font-size:13px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--amber); border:1px solid var(--amber-dim); padding:12px 22px; border-radius:2px; margin-top:12px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    height:100svh; position:relative; display:flex; align-items:flex-end;
+    overflow:hidden;
+  }
+  .hero-media{ position:absolute; inset:0; z-index:0; }
+  .hero-media img{ transform:scale(1.08); }
+  .hero-media::after{
+    content:'';
+    position:absolute; inset:0;
+    background:
+      linear-gradient(to top, var(--abyss) 0%, rgba(2,3,8,0.35) 45%, rgba(2,3,8,0.55) 100%),
+      linear-gradient(to right, rgba(2,3,8,0.5), transparent 55%);
+  }
+  .hero-content{
+    position:relative; z-index:1;
+    padding:0 6vw calc(8vh + 56px);
+    max-width:900px;
+  }
+  .hero-content .eyebrow{ margin-bottom:22px; }
+  .hero-content h1{
+    font-size:clamp(40px, 7vw, 92px);
+    line-height:0.98;
+    color:var(--foam);
+  }
+  .hero-content h1 em{ font-style:italic; color:var(--amber); font-weight:400; }
+  .hero-sub{
+    margin-top:24px; max-width:480px;
+    color:var(--shallow); font-size:16px; font-weight:300;
+  }
+  .hero-actions{ margin-top:40px; display:flex; align-items:center; gap:28px; flex-wrap:wrap; }
+  .btn-primary{
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    background:var(--amber); color:var(--abyss); padding:15px 30px; border-radius:2px;
+    transition:transform .25s ease, background .25s ease;
+    display:inline-block;
+  }
+  .btn-primary:hover{ transform:translateY(-2px); background:#d9e0ff; }
+  .btn-ghost{
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--foam); border-bottom:1px solid var(--foam); padding-bottom:3px;
+  }
+  .hero-scroll{
+    position:absolute; bottom:28px; left:6vw; z-index:1;
+    font-family:var(--mono); font-size:11px; color:var(--shallow); letter-spacing:.1em;
+    display:flex; align-items:center; gap:10px;
+  }
+  .hero-scroll .line{ width:1px; height:36px; background:var(--shallow-dim); position:relative; overflow:hidden; }
+  .hero-scroll .line::after{
+    content:''; position:absolute; top:-100%; left:0; width:100%; height:100%;
+    background:var(--amber); animation:scrollline 2.2s ease-in-out infinite;
+  }
+  @keyframes scrollline{ 0%{top:-100%;} 60%{top:100%;} 100%{top:100%;} }
+
+  /* ---------- Section shell ---------- */
+  .section{ padding:min(16vh,150px) 0; border-top:1px solid var(--line); }
+  .section-head{ margin-bottom:64px; max-width:640px; }
+  .section-head h2{ font-size:clamp(30px,4vw,48px); margin-top:18px; color:var(--foam); }
+  .section-head p{ margin-top:18px; color:var(--shallow); font-size:16px; max-width:520px; }
+  .section-alt{ background:var(--deep); }
+
+  /* ---------- Quem somos ---------- */
+  .about-grid{
+    display:grid; grid-template-columns:0.85fr 1.15fr; gap:64px; align-items:center;
+  }
+  .about-media{
+    aspect-ratio:4/5; border-radius:2px; overflow:hidden; position:relative;
+  }
+  .about-media .tag{
+    position:absolute; bottom:18px; left:18px; z-index:2;
+    font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--foam); background:rgba(2,3,8,0.55); backdrop-filter:blur(6px);
+    padding:8px 12px; border:1px solid var(--line);
+  }
+  .about-text p{ color:var(--shallow); font-size:17px; margin-bottom:20px; max-width:560px; }
+  .about-text p strong{ color:var(--foam); font-weight:500; }
+  .about-stats{ display:flex; gap:48px; margin-top:44px; flex-wrap:wrap; }
+  .stat b{ display:block; font-family:var(--serif); font-size:34px; color:var(--amber); font-weight:400; }
+  .stat span{ font-family:var(--mono); font-size:11px; color:var(--shallow); letter-spacing:.06em; }
+  @media (max-width:840px){ .about-grid{ grid-template-columns:1fr; } }
+
+  /* ---------- Cinematic photo breaks (estilo paisagem, 16:9) ---------- */
+  .cinebreak{
+    position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; background:var(--abyss);
+  }
+  .cinebreak .cine-img{
+    position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+  }
+  .cinebreak::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(to top, rgba(2,3,8,0.55) 0%, rgba(2,3,8,0.05) 30%, transparent 55%);
+  }
+  .cinebreak .cine-caption{
+    position:absolute; bottom:16px; left:16px; z-index:2;
+    font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--foam); background:rgba(2,3,8,0.55); backdrop-filter:blur(6px);
+    padding:8px 12px; border:1px solid var(--line);
+  }
+  @media (min-width:700px){
+    .cinebreak .cine-caption{ bottom:22px; left:6vw; font-size:11px; padding:9px 14px; }
+  }
+
+  /* ---------- Experiência ---------- */
+  .exp-grid{
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:0;
+    border:1px solid var(--line);
+  }
+  .exp-media{ position:relative; min-height:520px; }
+  .exp-panel{ padding:56px 48px; display:flex; flex-direction:column; justify-content:center; border-left:1px solid var(--line); }
+  .exp-panel h3{ font-size:30px; color:var(--foam); margin-bottom:8px; }
+  .exp-panel .price{ font-family:var(--mono); color:var(--amber); font-size:15px; margin-bottom:28px; }
+  .exp-panel .price b{ font-size:26px; font-family:var(--serif); font-weight:400; }
+  .feat-list{ list-style:none; display:flex; flex-direction:column; gap:16px; margin-bottom:32px; }
+  .feat-list li{
+    display:flex; gap:14px; align-items:flex-start;
+    font-size:15px; color:var(--shallow);
+  }
+  .feat-list li::before{ content:'•'; color:var(--amber); flex-shrink:0; }
+  .exp-meta{
+    display:grid; grid-template-columns:1fr 1fr; gap:16px 24px;
+    border-top:1px solid var(--line); padding-top:24px; margin-top:8px;
+  }
+  .exp-meta div span{ display:block; font-family:var(--mono); font-size:10px; color:var(--shallow-dim); letter-spacing:.1em; text-transform:uppercase; margin-bottom:6px; }
+  .exp-meta div b{ font-family:var(--sans); font-weight:500; font-size:14px; color:var(--foam); }
+  @media (max-width:900px){ .exp-grid{ grid-template-columns:1fr; } .exp-panel{ border-left:none; border-top:1px solid var(--line); } .exp-media{ min-height:340px; } }
+
+  /* ---------- Animais ---------- */
+  .animal-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--line);
+  }
+  .animal-card{
+    position:relative; aspect-ratio:3/4; overflow:hidden; background:var(--deep);
+    cursor:default;
+  }
+  .animal-card img{ transition:transform .7s cubic-bezier(.2,.7,.3,1); filter:grayscale(35%) brightness(.85); }
+  .animal-card:hover img{ transform:scale(1.06); filter:grayscale(0%) brightness(1); }
+  .animal-overlay{
+    position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; justify-content:flex-end;
+    padding:22px; background:linear-gradient(to top, rgba(2,3,8,0.92) 0%, transparent 55%);
+  }
+  .animal-overlay .name{ font-family:var(--serif); font-size:21px; color:var(--foam); }
+  .animal-overlay .sci{ font-family:var(--mono); font-style:normal; font-size:11px; color:var(--amber); margin-top:4px; }
+  .animal-overlay .season{ font-family:var(--mono); font-size:10px; color:var(--shallow); letter-spacing:.06em; margin-top:10px; text-transform:uppercase; }
+  @media (max-width:760px){ .animal-grid{ grid-template-columns:repeat(2,1fr); } }
+
+  /* ---------- Encontros (fichas sem foto) ---------- */
+  .encontros-note{ font-family:var(--mono); font-size:11px; color:var(--shallow-dim); letter-spacing:.03em; margin:28px 0 16px; }
+  .field-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line);
+  }
+  .field-card{
+    background:var(--deep); padding:22px 20px; display:flex; flex-direction:column; gap:8px; min-height:190px;
+  }
+  .field-card .name{ font-family:var(--serif); font-size:17px; color:var(--foam); line-height:1.25; }
+  .field-card .sci{ font-family:var(--mono); font-size:10px; color:var(--amber); }
+  .field-card .status{ font-family:var(--mono); font-size:9px; color:var(--shallow); letter-spacing:.06em; text-transform:uppercase; margin-top:auto; }
+  .field-card p{ font-size:12.5px; color:var(--shallow); line-height:1.55; margin:0; }
+  @media (max-width:900px){ .field-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:520px){ .field-grid{ grid-template-columns:1fr; } }
+
+  /* ---------- Como funciona ---------- */
+  .steps{ display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .step{ background:var(--abyss); padding:44px 30px; }
+  .section-alt .step{ background:var(--deep); }
+  .step .num{ font-family:var(--mono); font-size:12px; color:var(--amber-dim); }
+  .step h4{ font-family:var(--serif); font-size:21px; margin:16px 0 10px; color:var(--foam); font-weight:400; }
+  .step p{ font-size:14px; color:var(--shallow); }
+  @media (max-width:820px){ .steps{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:520px){ .steps{ grid-template-columns:1fr; } }
+
+  /* ---------- Galeria ---------- */
+  .gallery{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    grid-auto-rows:190px;
+    gap:6px;
+  }
+  .gallery figure{ overflow:hidden; position:relative; }
+  .gallery img{ transition:transform .6s ease; }
+  .gallery figure:hover img{ transform:scale(1.05); }
+  .g1{ grid-column:span 3; grid-row:span 2; }
+  .g2{ grid-column:span 3; grid-row:span 1; }
+  .g3{ grid-column:span 2; grid-row:span 1; }
+  .g4{ grid-column:span 2; grid-row:span 2; }
+  .g5{ grid-column:span 2; grid-row:span 1; }
+  .g6{ grid-column:span 3; grid-row:span 1; }
+  .g7{ grid-column:span 3; grid-row:span 1; }
+  .g8{ grid-column:span 3; grid-row:span 1; }
+  .g9{ grid-column:span 3; grid-row:span 1; }
+  .g10{ grid-column:span 3; grid-row:span 1; }
+  .g11{ grid-column:span 3; grid-row:span 1; }
+  .g12{ grid-column:span 3; grid-row:span 1; }
+  @media (max-width:760px){
+    .gallery{ grid-template-columns:repeat(2,1fr); grid-auto-rows:150px; }
+    .g1,.g2,.g3,.g4,.g5,.g6,.g7,.g8,.g9,.g10,.g11,.g12{ grid-column:span 1; grid-row:span 1; }
+    .g1{ grid-column:span 2; grid-row:span 2; }
+  }
+
+  /* ---------- Depoimentos ---------- */
+  .testimonial-row{ display:grid; grid-template-columns:repeat(2,1fr); gap:48px; }
+  .testimonial blockquote{
+    font-family:var(--serif); font-size:19px; font-weight:400; color:var(--foam);
+    line-height:1.5; font-style:italic;
+  }
+  .testimonial cite{
+    display:block; margin-top:22px; font-family:var(--mono); font-style:normal;
+    font-size:11px; letter-spacing:.08em; color:var(--shallow); text-transform:uppercase;
+  }
+  @media (max-width:820px){ .testimonial-row{ grid-template-columns:1fr; gap:44px; } }
+
+  /* ---------- FAQ ---------- */
+  .faq-list{ border-top:1px solid var(--line); max-width:820px; }
+  .faq-item{ border-bottom:1px solid var(--line); }
+  .faq-q{
+    width:100%; text-align:left; background:none; border:none; color:var(--foam);
+    font-family:var(--serif); font-size:18px; font-weight:400;
+    padding:26px 0; display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer;
+  }
+  .faq-q .plus{ font-family:var(--mono); color:var(--amber); font-size:18px; transition:transform .3s ease; flex-shrink:0; margin-left:20px; }
+  .faq-item.open .plus{ transform:rotate(45deg); }
+  .faq-a{
+    max-height:0; overflow:hidden; transition:max-height .35s ease;
+  }
+  .faq-a p{ padding-bottom:26px; color:var(--shallow); font-size:15px; max-width:640px; }
+
+  /* ---------- Contato ---------- */
+  .contact-section{
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:64px;
+  }
+  .contact-section h2{ font-size:clamp(32px,4.2vw,56px); }
+  .contact-section .eyebrow{ margin-bottom:20px; }
+  .contact-links{ margin-top:40px; display:flex; flex-direction:column; gap:18px; }
+  .contact-links a{
+    font-family:var(--mono); font-size:14px; color:var(--foam);
+    display:flex; align-items:center; gap:14px; padding-bottom:12px; border-bottom:1px solid var(--line);
+    transition:color .2s ease;
+  }
+  .contact-links a:hover{ color:var(--amber); }
+  .contact-links a .arrow{ color:var(--amber); }
+  .contact-card{
+    background:var(--deep); border:1px solid var(--line); padding:40px;
+  }
+  .contact-card p{ color:var(--shallow); font-size:14px; margin-bottom:24px; }
+  .contact-card .price-big{ font-family:var(--serif); font-size:44px; color:var(--amber); font-weight:400; }
+  .contact-card .price-note{ font-family:var(--mono); font-size:11px; color:var(--shallow); margin-top:6px; margin-bottom:28px; }
+  @media (max-width:840px){ .contact-section{ grid-template-columns:1fr; } }
+
+  footer{
+    border-top:1px solid var(--line); padding:44px 6vw; 
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;
+  }
+  footer .logo{ font-size:16px; }
+  footer .fine{ font-family:var(--mono); font-size:11px; color:var(--shallow-dim); letter-spacing:.04em; }
+  footer .fsocial{ display:flex; flex-wrap:wrap; gap:14px 24px; }
+  footer .fsocial a{ font-family:var(--mono); font-size:11px; color:var(--shallow); letter-spacing:.06em; text-transform:uppercase; }
+  footer .fsocial a:hover{ color:var(--amber); }
+
+
+
+  /* ---------- Estampas (arte das camisetas como textura de fundo) ---------- */
+  .has-art{ overflow:hidden; }
+  .has-art > .wrap, .has-art > .animal-grid, .has-art > .field-grid{ position:relative; z-index:1; }
+  .art{ position:absolute; z-index:0; pointer-events:none; user-select:none; height:auto; opacity:.13; }
+  .art-jubarte{ right:-4%; top:70px; width:min(620px,52vw); }
+  .art-navio{ right:-3%; top:50%; transform:translateY(-50%); width:min(720px,58vw); opacity:.11; }
+  .art-manta{ right:3%; top:120px; width:min(380px,32vw); }
+  @media (max-width:900px){
+    .art-jubarte{ width:90vw; right:-30%; top:40px; opacity:.09; }
+    .art-navio{ width:120vw; right:-45%; opacity:.08; }
+    .art-manta{ width:60vw; right:-18%; top:60px; opacity:.08; }
+  }
+  footer .logo .logo-img{ height:64px; }
+  @media (max-width:900px){ .logo .logo-img{ height:42px; } footer .logo .logo-img{ height:58px; } }
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .8s ease, transform .8s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){
+    html{ scroll-behavior:auto; }
+    .reveal{ opacity:1; transform:none; transition:none; }
+    .hero-scroll .line::after{ animation:none; }
+  }
+
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--amber); outline-offset:3px;
+  }
+
+  /* ================= DIVE: extras desta página ================= */
+  nav a.active{ color:var(--foam); }
+  nav a.active::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:1px; background:var(--amber); }
+  .hero-media img{ width:100%; height:100%; object-fit:cover; }
+  .dive-split{ display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; }
+  .dive-photo{ aspect-ratio:4/5; border-radius:2px; overflow:hidden; position:relative; }
+  .dive-photo.wide{ aspect-ratio:16/10; }
+  @media (max-width:840px){ .dive-split{ grid-template-columns:1fr; gap:40px; } .dive-photo{ aspect-ratio:4/3; } }
+  .lead-serif{ font-family:var(--serif); font-size:clamp(22px,2.6vw,30px); line-height:1.35; color:var(--foam); max-width:30ch; }
+  .profile{ margin-top:36px; border:1px solid var(--line); background:var(--deep-2); padding:26px 22px 18px; }
+  .profile svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .profile .cap{ font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--shallow-dim); margin-top:12px; text-transform:uppercase; }
+  .recs-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:40px 32px; }
+  @media (max-width:900px){ .recs-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px){ .recs-grid{ grid-template-columns:1fr; gap:28px; } }
+  .alca-body address{ font-style:normal; font-family:var(--serif); font-size:22px; line-height:1.4; color:var(--foam); }
+  .agenda-note{ color:var(--shallow); font-size:14px; line-height:1.7; margin:0 0 26px; }
+  .art-shark{ right:-3%; top:60px; width:min(300px,26vw); transform:rotate(-8deg); }
+  .art-dolphins{ left:-6%; bottom:-10%; width:min(900px,70vw); opacity:.1; }
+  @media (max-width:900px){ .art-shark{ width:55vw; right:-22%; opacity:.08; } .art-dolphins{ width:140vw; left:-30%; bottom:auto; top:20px; opacity:.08; } }
+</style>
+</head>
+<body>
+
+<div id="depth-gauge" aria-hidden="true">
+  <div class="gauge-value" id="gaugeValue">0m</div>
+  <div class="gauge-track">
+    <div class="gauge-fill" id="gaugeFill"></div>
+    <div class="gauge-dot" id="gaugeDot"></div>
+  </div>
+  <div class="gauge-label">profundidade<br>do mergulho</div>
+</div>
+
+<header id="siteHeader">
+  <a href="index.html" class="logo"><img src="images/logo-thecrazybiology-escuro.webp" width="984" height="658" alt="TheCrazyBiology" class="logo-img"></a>
+  <nav>
+    <a href="index.html#sobre">Quem somos</a>
+    <a href="index.html#signature">Experiência</a>
+    <a href="dive.html" class="active" aria-current="page">Dive</a>
+    <a href="index.html#animais">Animais</a>
+    <a href="index.html#como-funciona">Como funciona</a>
+    <a href="index.html#galeria">Galeria</a>
+    <a href="products.html">The Products</a>
+    <a href="index.html#faq">FAQ</a>
+  </nav>
+  <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="nav-cta">Ver agenda</a>
+  <button class="nav-toggle" id="navToggle" aria-label="menu">☰</button>
+</header>
+
+<nav class="mobile-menu" id="mobileMenu">
+  <a href="index.html#sobre">Quem somos</a>
+  <a href="index.html#signature">Experiência</a>
+  <a href="dive.html" aria-current="page">Dive</a>
+  <a href="index.html#animais">Animais</a>
+  <a href="index.html#como-funciona">Como funciona</a>
+  <a href="index.html#galeria">Galeria</a>
+  <a href="products.html">The Products</a>
+  <a href="index.html#faq">FAQ</a>
+  <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="mobile-cta">Ver agenda no WhatsApp</a>
+</nav>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-media">
+      <img src="images/dive-cardume-roncadores.webp" alt="Cardume de roncadores listrados de amarelo nadando em água verde-azulada" fetchpriority="high">
+    </div>
+    <div class="hero-content">
+      <div class="eyebrow">Ilha das Cabras · Ilhabela · São Paulo</div>
+      <h1>The Ocean <em>Dive</em>.</h1>
+      <p class="hero-sub">Mergulho de cilindro em um santuário marinho, guiado por um biólogo e instrutor de mergulho. Sem experiência prévia, até 7 metros de profundidade.</p>
+      <div class="hero-actions">
+        <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="btn-primary">Ver agenda no WhatsApp</a>
+        <a href="#experiencia" class="btn-ghost">Ver a experiência</a>
+      </div>
+    </div>
+    <div class="hero-scroll"><div class="line"></div>role para mergulhar</div>
+  </section>
+
+  <!-- A EXPERIÊNCIA -->
+  <section class="section" id="experiencia">
+    <div class="wrap">
+      <div class="about-grid">
+        <div class="about-media reveal">
+          <img src="images/dive-cardume-robalos.webp" alt="Cardume de robalos passando perto da câmera" loading="lazy">
+          <div class="tag">Ilha das Cabras, Ilhabela</div>
+        </div>
+        <div class="about-text reveal">
+          <div class="eyebrow">A experiência</div>
+          <h2 style="font-size:clamp(30px,4vw,48px); margin:18px 0 24px;">Viva, entenda e proteja a natureza.</h2>
+          <p>Mergulhe de cilindro em um santuário marinho e aprenda sobre a realidade e a importância do fundo do mar com <strong>um biólogo e instrutor de mergulho</strong>.</p>
+          <p>Não é um batismo apressado. É tempo de verdade embaixo d'água, com quem estuda e documenta a vida marinha de Ilhabela.</p>
+          <div class="about-stats">
+            <div class="stat"><b>7m</b><span>de profundidade, no máx.</span></div>
+            <div class="stat"><b>50min</b><span>submerso, aproximadamente</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUEBRA CINEMATOGRÁFICA -->
+  <section class="cinebreak">
+    <img class="cine-img" src="images/dive-tartaruga-mergulhadora.webp" alt="Tartaruga-de-pente nadando ao lado de uma mergulhadora" loading="lazy">
+    <div class="cine-caption">Tartaruga-de-pente · Ilha das Cabras</div>
+  </section>
+
+  <!-- A EXPEDIÇÃO -->
+  <section class="section section-alt" id="mergulho">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">O mergulho</div>
+        <h2>The Ocean Dive<span class="line-suffix">Mergulho de cilindro</span></h2>
+        <p>Você aprende as técnicas básicas do mergulho SCUBA, desce até 7 metros e explora o mundo subaquático por até uma hora.</p>
+      </div>
+      <div class="exp-grid reveal">
+        <div class="exp-media">
+          <img src="images/dive-diferenciais-mergulhador.webp" alt="Mergulhador observando um sargo de perto sobre o fundo rochoso" loading="lazy" style="position:absolute; inset:0;">
+        </div>
+        <div class="exp-panel">
+          <h3>Diferenciais</h3>
+          <div class="price"><b>R$ 599</b> / pessoa</div>
+          <ul class="feat-list">
+            <li>Mergulho de verdade, sem pressa: cerca de 50 minutos submerso, no ritmo da vida marinha</li>
+            <li>Equipamento de qualidade e confiança, com apoio Cressi</li>
+            <li>Guiado por Daniel Munhoz, criador do @thecrazybiology, biólogo, documentarista e instrutor de mergulho com certificação internacional</li>
+            <li>Fotos e vídeos profissionais do seu mergulho inclusos</li>
+            <li>Abordagem ética, educativa e profissional, sempre priorizando o bem-estar animal</li>
+          </ul>
+          <div class="exp-meta">
+            <div><span>Horário</span><b>09h00 às 12h00</b></div>
+            <div><span>Submerso</span><b>Cerca de 50 min</b></div>
+            <div><span>Grupo</span><b>Até 4 participantes</b></div>
+            <div><span>Idade mínima</span><b>10 anos</b></div>
+            <div><span>Experiência</span><b>Não precisa</b></div>
+            <div><span>Saber nadar</span><b>Não precisa</b></div>
+          </div>
+        </div>
+      </div>
+      <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="btn-primary" style="margin-top:26px; display:inline-block;">Ver agenda no WhatsApp</a>
+    </div>
+  </section>
+
+  <!-- SOBRE A AVENTURA -->
+  <section class="section" id="aventura">
+    <div class="wrap">
+      <div class="dive-split">
+        <div class="reveal">
+          <div class="eyebrow">Sobre a aventura</div>
+          <h2 style="font-size:clamp(30px,4vw,48px); margin:18px 0 20px;">Três horas, uma descida lenta.</h2>
+          <p class="lead-serif">Da travessia de bote até a volta, você é acompanhado o tempo todo. Embaixo d'água, a descida é gradual e no seu ritmo.</p>
+          <div class="profile" role="img" aria-label="Perfil do mergulho: descida gradual até cerca de 7 metros, aproximadamente 50 minutos de fundo e subida lenta de volta à superfície.">
+            <svg viewBox="-10 0 620 205" aria-hidden="true">
+              <line x1="40" y1="20" x2="580" y2="20" stroke="rgba(238,240,245,.3)" stroke-dasharray="3 5"/>
+              <line x1="40" y1="160" x2="580" y2="160" stroke="rgba(238,240,245,.12)"/>
+              <text x="30" y="27" fill="#9aa5c0" font-size="18" text-anchor="end" font-family="Space Mono, monospace">0m</text>
+              <text x="30" y="167" fill="#9aa5c0" font-size="18" text-anchor="end" font-family="Space Mono, monospace">7m</text>
+              <path d="M40 20 C 80 20, 90 110, 130 125 S 190 150, 230 140 S 300 158, 350 146 S 430 128, 480 140 S 520 120, 545 70 L 580 20" fill="none" stroke="#b8c6ff" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="40" cy="20" r="4" fill="#b8c6ff"/><circle cx="580" cy="20" r="4" fill="#b8c6ff"/>
+              <text x="40" y="200" fill="#9aa5c0" font-size="16" font-family="Space Mono, monospace">ENTRADA</text>
+              <text x="580" y="200" fill="#9aa5c0" font-size="16" text-anchor="end" font-family="Space Mono, monospace">~50 MIN</text>
+            </svg>
+            <div class="cap">Perfil aproximado. Varia conforme o mar e o conforto de cada participante.</div>
+          </div>
+        </div>
+        <div class="dive-photo reveal">
+          <img src="images/dive-estatua-ilha-das-cabras.webp" alt="Mergulhadora ao lado de uma estátua submersa cercada de roncadores na Ilha das Cabras" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INCLUSO -->
+  <section class="section section-alt" id="incluso">
+    <div class="wrap">
+      <div class="alca-grid reveal">
+        <div class="alca-media" role="img" aria-label="Tartaruga-de-pente descansando entre as rochas e olhando para a câmera" style="background-image:url('images/dive-tartaruga-de-pente.webp');background-size:cover;background-position:50% 35%;"></div>
+        <div class="alca-body">
+          <div class="eyebrow">Incluso na experiência</div>
+          <h2>The Ocean Dive<span class="line-suffix">Tudo pronto para você</span></h2>
+          <ul class="feat-list" style="margin-bottom:6px;">
+            <li>Equipamento completo: máscara, roupa de neoprene, nadadeira, regulador, colete, cilindro e lastro</li>
+            <li>Travessia de bote ida e volta até a Ilha das Cabras</li>
+            <li>Fotos e vídeos subaquáticos do seu mergulho</li>
+            <li>Acompanhamento durante toda a experiência</li>
+          </ul>
+          <div class="alca-price"><b>R$ 599</b><span>/ pessoa</span></div>
+          <p style="color:var(--shallow-dim); font-size:14px; margin-top:2px;">As datas do mergulho são combinadas direto comigo pelo WhatsApp. Pagamento via Pix ou link de cartão.</p>
+          <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="btn-primary" style="align-self:flex-start; margin-top:8px;">Ver agenda no WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECOMENDAÇÕES -->
+  <section class="section has-art" id="antes">
+    <img class="art art-shark" src="images/estampa-tubarao-baleia.webp" alt="" aria-hidden="true" loading="lazy">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">Antes de vir</div>
+        <h2>Recomendações importantes</h2>
+      </div>
+      <div class="recs-grid reveal">
+        <div class="shared-item"><h3>Enjoo</h3><p>Se costuma enjoar, tome remédio para enjoo antes da travessia.</p></div>
+        <div class="shared-item"><h3>Roupa para o frio</h3><p>Venha com roupa de aventura que aguente o frio. As manhãs podem ser bem geladas.</p></div>
+        <div class="shared-item"><h3>Sua própria água</h3><p>Traga sua garrafa para diminuirmos o plástico de uso único.</p></div>
+        <div class="shared-item"><h3>Toalha e roupa seca</h3><p>Para depois do mergulho, ou caso queira entrar na água de novo.</p></div>
+        <div class="shared-item"><h3>Equipamento próprio</h3><p>Se tiver o seu equipamento de mergulho, pode trazer.</p></div>
+        <div class="shared-item"><h3>Repelente</h3><p>Quando possível, a saída inclui uma parada para explorar uma praia paradisíaca.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PONTO DE ENCONTRO -->
+  <section class="section section-alt" id="encontro">
+    <div class="wrap">
+      <div class="alca-grid reveal">
+        <div class="alca-media" role="img" aria-label="Vista aérea da Ilha das Cabras, em Ilhabela, com o píer e o mar ao redor" style="background-image:url('images/dive-ilha-das-cabras-aerea.webp');background-size:cover;background-position:center;"></div>
+        <div class="alca-body">
+          <div class="eyebrow">Ponto de encontro</div>
+          <h2>Prado's Dive<span class="line-suffix">Escola e operadora de mergulho</span></h2>
+          <address>Avenida Brasil, 1715, Piúva<br>Ilhabela, SP · 11630-000</address>
+          <a href="https://www.google.com/maps/search/?api=1&query=Avenida%20Brasil%2C%201715%2C%20Pi%C3%BAva%2C%20Ilhabela%20SP" target="_blank" rel="noopener" class="btn-ghost" style="align-self:flex-start; margin-top:6px;">Abrir no mapa</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTATO -->
+  <section class="section has-art" id="contato">
+    <img class="art art-dolphins" src="images/estampa-golfinhos.webp" alt="" aria-hidden="true" loading="lazy">
+    <div class="wrap">
+      <div class="contact-section reveal">
+        <div>
+          <div class="eyebrow">Vamos ao fundo</div>
+          <h2>Sua primeira respiração<br>embaixo d'água começa aqui.</h2>
+          <p style="color:var(--shallow); margin-top:20px; max-width:460px;">No máximo 4 participantes por saída, para que cada pessoa tenha atenção de verdade.</p>
+          <div class="contact-links">
+            <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener"><span class="arrow">→</span> Ver agenda no WhatsApp</a>
+            <a href="https://instagram.com/thecrazybiology" target="_blank" rel="noopener"><span class="arrow">→</span> @thecrazybiology no Instagram</a>
+            <a href="mailto:contato@thecrazybiology.com"><span class="arrow">→</span> contato@thecrazybiology.com</a>
+          </div>
+        </div>
+        <div class="contact-card">
+          <div class="eyebrow" style="margin-bottom:16px;">The Ocean Dive</div>
+          <p style="margin-bottom:6px;">09h00 às 12h00 · até 4 participantes<br>Ilha das Cabras, Ilhabela</p>
+          <div class="price-big">R$ 599</div>
+          <div class="price-note">por pessoa</div>
+          <p class="agenda-note">As datas do mergulho são combinadas direto comigo pelo WhatsApp. Toque no botão, me conte quantas pessoas e qual dia você prefere, e eu confirmo a disponibilidade.</p>
+          <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="btn-primary" style="width:100%; text-align:center;">Ver agenda no WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <a href="index.html" class="logo"><img src="images/logo-thecrazybiology-escuro.webp" width="984" height="658" alt="TheCrazyBiology" class="logo-img"></a>
+  <div class="fsocial">
+    <a href="index.html">The Ocean Safari</a>
+    <a href="dive.html">Dive</a>
+    <a href="products.html">The Products</a>
+    <a href="#contato">Contato</a>
+    <a href="privacidade.html">Privacidade</a>
+  </div>
+  <div class="fine">© 2026 TheCrazyBiology · Ilhabela, SP · Turismo e educação ambiental</div>
+</footer>
+
+<script>
+  console.log('%cOh yes 🤿🌊', 'font-size:32px; font-weight:bold; color:#b8c6ff;');
+  console.log('%cVocê achou o easter egg do console. The Ocean Dive · Ilhabela.', 'font-size:12px; color:#9aa5c0;');
+
+  // Easter egg: clique 5x no logo
+  (function(){
+    const logos = document.querySelectorAll('.logo');
+    let clickCount = 0, clickTimer = null;
+    function showOhYes(){
+      const el = document.createElement('div');
+      el.textContent = 'Oh yes! 🤿';
+      el.style.cssText = "position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.7); font-family:'Instrument Serif', serif; font-size:56px; font-style:italic; color:#b8c6ff; z-index:9999; pointer-events:none; text-shadow:0 4px 30px rgba(184,198,255,0.6); opacity:0; transition:opacity .4s ease, transform .4s ease;";
+      document.body.appendChild(el);
+      requestAnimationFrame(()=>{ el.style.opacity='1'; el.style.transform='translate(-50%,-50%) scale(1)'; });
+      setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translate(-50%,-50%) scale(1.15)'; setTimeout(()=> el.remove(), 400); }, 1400);
+    }
+    logos.forEach(logo=>{
+      logo.addEventListener('click', (e)=>{
+        clickCount++; clearTimeout(clickTimer);
+        clickTimer = setTimeout(()=>{ clickCount = 0; }, 1500);
+        if(clickCount >= 5){ e.preventDefault(); clickCount = 0; showOhYes(); }
+      });
+    });
+  })();
+
+  // Menu mobile
+  const navToggle = document.getElementById('navToggle');
+  const mobileMenu = document.getElementById('mobileMenu');
+  navToggle.addEventListener('click', () => {
+    const isOpen = mobileMenu.classList.toggle('open');
+    navToggle.textContent = isOpen ? '✕' : '☰';
+  });
+  mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    mobileMenu.classList.remove('open'); navToggle.textContent = '☰';
+  }));
+
+  // Header + medidor: aqui a profundidade é real, vai de 0 a 7 m (o máximo do mergulho)
+  const header = document.getElementById('siteHeader');
+  const gaugeFill = document.getElementById('gaugeFill');
+  const gaugeDot = document.getElementById('gaugeDot');
+  const gaugeValue = document.getElementById('gaugeValue');
+  const maxDepth = 7;
+  function onScroll(){
+    const y = window.scrollY;
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    const p = h > 0 ? Math.min(y / h, 1) : 0;
+    header.classList.toggle('scrolled', y > 40);
+    gaugeFill.style.height = (p * 100) + '%';
+    gaugeDot.style.top = (p * 100) + '%';
+    gaugeValue.textContent = (p * maxDepth).toFixed(1).replace('.', ',') + 'm';
+  }
+  document.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+
+  // Revelar ao rolar
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold:0.12 });
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+
+</body>
+</html>
