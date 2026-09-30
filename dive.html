@@ -571,6 +571,7 @@
   nav a.active{ color:var(--foam); }
   nav a.active::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:1px; background:var(--amber); }
   .hero-media img{ width:100%; height:100%; object-fit:cover; }
+  .hero-media video{ width:100%; height:100%; object-fit:cover; object-position:70% center; display:block; }
   .dive-split{ display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; }
   .dive-photo{ aspect-ratio:4/5; border-radius:2px; overflow:hidden; position:relative; }
   .dive-photo.wide{ aspect-ratio:16/10; }
@@ -639,7 +640,9 @@
   <!-- HERO -->
   <section class="hero">
     <div class="hero-media">
-      <img src="images/dive-cardume-roncadores.webp" alt="Cardume de roncadores listrados de amarelo nadando em água verde-azulada" fetchpriority="high">
+      <video id="heroVideo" autoplay muted loop playsinline preload="auto" poster="images/dive-tartaruga-video-poster.webp" aria-label="Tartaruga-de-pente nadando sobre as pedras da Ilha das Cabras, cercada de peixes">
+        <source src="images/dive-tartaruga-video.mp4" type="video/mp4">
+      </video>
     </div>
     <div class="hero-content">
       <div class="eyebrow">Ilha das Cabras · Ilhabela · São Paulo</div>
@@ -658,7 +661,7 @@
     <div class="wrap">
       <div class="about-grid">
         <div class="about-media reveal">
-          <img src="images/dive-cardume-robalos.webp" alt="Cardume de robalos passando perto da câmera" loading="lazy">
+          <img src="images/dive-ilha-das-cabras.webp" alt="Mar cristalino e verde-azulado na Ilha das Cabras, com a ilha coberta de mata e coqueiros ao fundo" loading="lazy" style="width:100%;height:100%;object-fit:cover;">
           <div class="tag">Ilha das Cabras, Ilhabela</div>
         </div>
         <div class="about-text reveal">
@@ -891,5 +894,11 @@
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 </script>
 
+<script>
+(function(){
+  var v=document.getElementById('heroVideo');
+  if(v && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){ v.removeAttribute('autoplay'); v.pause(); }
+})();
+</script>
 </body>
 </html>
