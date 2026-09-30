@@ -366,7 +366,7 @@
         </div>
         <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Data</label><input type="date" id="ntDate"></div>
-          <div class="field" style="margin-bottom:0;"><label>Preço (R$)</label><input type="number" id="ntPrice" value="649"></div>
+          <div class="field" style="margin-bottom:0;"><label>Preço (R$)</label><input type="number" id="ntPrice" value="499"></div>
         </div>
         <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Capacidade</label><input type="number" id="ntCap" value="10"></div>
@@ -460,10 +460,10 @@
    e bloqueio de vagas transacional. Nada aqui é simulado.
    ============================================================ */
 // Valores antigos, de quando existia uma linha só. Hoje cada linha tem os
-// próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 649 e
+// próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 499 e
 // Explorer 16 vagas / R$ 399. Mantidos apenas como referência.
 const CAPACITY_DEFAULT = 10;
-const BASE_PRICE = 649;
+const BASE_PRICE = 499;
 
 async function apiGet(url){
   try{
@@ -1588,9 +1588,9 @@ function closeNewTripForm(){ document.getElementById('newTripForm').style.displa
 
 // Padrões de cada linha, iguais aos do servidor. Trocar a linha no
 // formulário já ajusta preço e capacidade, para não criar uma saída
-// Explorer com 10 vagas a R$ 649 por esquecimento.
+// Explorer com 10 vagas a R$ 499 por esquecimento.
 const LINE_PRESETS = {
-  signature: { price: 649, capacity: 10 },
+  signature: { price: 499, capacity: 10 },
   explorer:  { price: 399, capacity: 16 }
 };
 function applyLineDefaults(){

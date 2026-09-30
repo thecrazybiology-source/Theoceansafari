@@ -587,6 +587,12 @@
   a:focus-visible, button:focus-visible{
     outline:2px solid var(--amber); outline-offset:3px;
   }
+  .course-card{ margin-top:28px; border:1px solid rgba(180,195,255,.22); background:rgba(12,24,60,.55); padding:32px 28px; display:grid; gap:14px; }
+  .course-card h3{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,5vw,32px); color:var(--foam); margin:0; }
+  .course-card p{ color:var(--shallow); margin:0; max-width:620px; }
+  .coupon{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:6px 0 4px; }
+  .coupon-code{ font-family:var(--mono); letter-spacing:.18em; font-size:16px; color:var(--foam); border:1px dashed rgba(180,195,255,.6); padding:10px 16px; }
+  .coupon-note{ font-size:14px; color:var(--shallow); }
 </style>
 </head>
 <body>
@@ -714,7 +720,7 @@
             <h3>The Ocean Safari<span class="line-suffix">Signature</span></h3>
             <p>Guiado por Daniel Munhoz, criador do @thecrazybiology. Grupos menores, embarcação premium.</p>
             <p style="color:var(--shallow-dim); font-size:14px;">Em Ilhabela o ano todo. No verão, também em Alcatrazes.</p>
-            <div class="line-card-price">R$ 649<span>/ participante</span></div>
+            <div class="line-card-price">R$ 499<span>/ participante</span></div>
             <a href="#signature" class="btn-ghost">Conhecer a expedição</a>
           </div>
         </div>
@@ -762,13 +768,21 @@
         <div class="alca-body">
           <h2>The Ocean Dive<span class="line-suffix">Mergulho de cilindro</span></h2>
           <p>Mergulho de cilindro no santuário marinho da Ilha das Cabras, guiado por Daniel Munhoz, biólogo e instrutor de mergulho. Não precisa de experiência prévia nem saber nadar.</p>
-          <p>Você aprende as técnicas básicas do mergulho SCUBA, desce até 7 metros e fica cerca de 50 minutos submerso, com fotos e vídeos do seu mergulho inclusos.</p>
-          <div class="alca-price"><b>R$ 599</b><span>/ pessoa</span></div>
+          <p>Você aprende as técnicas básicas do mergulho SCUBA, desce até 7 metros e fica cerca de 50 minutos submerso. Fotos e vídeos do seu mergulho não estão inclusos: são um pacote opcional de R$ 100, disponível só depois da experiência.</p>
+          <div class="alca-price"><b>R$ 399</b><span>/ pessoa</span></div>
           <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
             <a href="dive.html" class="btn-primary">Conhecer o mergulho</a>
             <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="btn-ghost">Ver agenda no WhatsApp</a>
           </div>
         </div>
+      </div>
+      <div class="course-card reveal">
+        <div class="eyebrow">Cursos e certificações</div>
+        <h3>Aprenda a mergulhar com a gente</h3>
+        <p>Gostou de respirar embaixo d'água e quer ir além? A Prado's Dive, operadora de mergulho onde Daniel Munhoz trabalha em Ilhabela, oferece todas as certificações de mergulho.</p>
+        <p>Do primeiro curso, o <strong>Open Water Diver</strong>, até a formação de <strong>instrutor de mergulho</strong>: dá para fazer toda a sua formação aqui, sem sair da ilha.</p>
+        <div class="coupon"><span class="coupon-code">THECRAZY</span><span class="coupon-note">Cupom com desconto especial nos cursos da Prado's Dive</span></div>
+        <a href="https://ig.me/m/thecrazybiology" target="_blank" rel="noopener" class="btn-primary" style="justify-self:start;">Consultar disponibilidade no direct</a>
       </div>
     </div>
   </section>
@@ -794,12 +808,13 @@
         </div>
         <div class="exp-panel">
           <h3>Saída em alto mar</h3>
-          <div class="price"><b>R$ 649</b> / participante</div>
+          <div class="price"><b>R$ 499</b> / participante</div>
           <ul class="feat-list">
             <li>Navegação livre, sem roteiro fixo, guiada por Daniel Munhoz, criador do @thecrazybiology</li>
             <li>Mergulho livre guiado, opcional, com espécies não cetáceas*</li>
-            <li>Drone a bordo para procurar e registrar os animais*</li>
+            <li>Drone a bordo para procurar os animais*</li>
             <li>Máscara, snorkel, snacks e bebidas sem álcool inclusos</li>
+            <li>Imagens da expedição não inclusas: pacote opcional de R$ 100, disponível só depois da experiência</li>
             <li>Abordagem ética e educativa, sempre priorizando o bem-estar animal</li>
           </ul>
           <div class="exp-meta">
@@ -834,6 +849,7 @@
             <li>Navegação livre, sem roteiro fixo, guiada por biólogo e instrutor de mergulho da equipe @thecrazybiology</li>
             <li>Mergulho livre guiado, opcional, com espécies não cetáceas*</li>
             <li>Máscara, snorkel, snacks e bebidas sem álcool inclusos</li>
+            <li>Imagens da expedição não inclusas: pacote opcional de R$ 100, disponível só depois da experiência</li>
             <li>Abordagem ética e educativa, sempre priorizando o bem-estar animal</li>
           </ul>
           <div class="exp-meta">
@@ -863,7 +879,7 @@
         </div>
         <div class="shared-item">
           <h3>Imagens de drone</h3>
-          <p>O drone voa a partir da embarcação Signature, mas as imagens são de todos: participantes das duas linhas recebem o material depois da expedição. Os registros dependem dos avistamentos e das condições de mar do dia, então variam de saída para saída e não são garantidos.</p>
+          <p>O drone voa a partir da embarcação Signature e registra os encontros das duas linhas. As imagens não estão inclusas no valor: são um pacote opcional de R$ 100 por pessoa, que você pode comprar só depois da expedição, já sabendo o que foi registrado. Os registros dependem dos avistamentos e das condições de mar do dia, então variam de saída para saída.</p>
         </div>
       </div>
       <p class="ethics-note">Para proteger o bem-estar dos animais e manter a qualidade científica de cada encontro, limitamos o número de embarcações presentes em cada avistamento.</p>
@@ -1107,7 +1123,7 @@
         </div>
         <div class="faq-item">
           <button class="faq-q">O que está incluso no valor?<span class="plus">+</span></button>
-          <div class="faq-a"><p>Máscara e snorkel de mergulho, snacks e bebidas sem álcool, acompanhamento de biólogo durante toda a expedição e imagens de drone, quando as condições de mar e vento permitem.</p></div>
+          <div class="faq-a"><p>Máscara e snorkel de mergulho, snacks e bebidas sem álcool, e acompanhamento de biólogo durante toda a expedição. As imagens não estão inclusas: são um pacote opcional de R$ 100 por pessoa, que só pode ser comprado depois da experiência.</p></div>
         </div>
         <div class="faq-item">
           <button class="faq-q">Vocês garantem que vou ver os animais?<span class="plus">+</span></button>

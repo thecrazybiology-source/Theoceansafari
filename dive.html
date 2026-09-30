@@ -587,6 +587,12 @@
   .art-shark{ right:-3%; top:60px; width:min(300px,26vw); transform:rotate(-8deg); }
   .art-dolphins{ left:-6%; bottom:-10%; width:min(900px,70vw); opacity:.1; }
   @media (max-width:900px){ .art-shark{ width:55vw; right:-22%; opacity:.08; } .art-dolphins{ width:140vw; left:-30%; bottom:auto; top:20px; opacity:.08; } }
+  .course-card{ margin-top:28px; border:1px solid rgba(180,195,255,.22); background:rgba(12,24,60,.55); padding:32px 28px; display:grid; gap:14px; }
+  .course-card h3{ font-family:var(--serif); font-weight:400; font-size:clamp(24px,5vw,32px); color:var(--foam); margin:0; }
+  .course-card p{ color:var(--shallow); margin:0; max-width:620px; }
+  .coupon{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:6px 0 4px; }
+  .coupon-code{ font-family:var(--mono); letter-spacing:.18em; font-size:16px; color:var(--foam); border:1px dashed rgba(180,195,255,.6); padding:10px 16px; }
+  .coupon-note{ font-size:14px; color:var(--shallow); }
 </style>
 </head>
 <body>
@@ -689,12 +695,12 @@
         </div>
         <div class="exp-panel">
           <h3>Diferenciais</h3>
-          <div class="price"><b>R$ 599</b> / pessoa</div>
+          <div class="price"><b>R$ 399</b> / pessoa</div>
           <ul class="feat-list">
             <li>Mergulho de verdade, sem pressa: cerca de 50 minutos submerso, no ritmo da vida marinha</li>
             <li>Equipamento de qualidade e confiança, com apoio Cressi</li>
             <li>Guiado por Daniel Munhoz, criador do @thecrazybiology, biólogo, documentarista e instrutor de mergulho com certificação internacional</li>
-            <li>Fotos e vídeos profissionais do seu mergulho inclusos</li>
+            <li>Fotos e vídeos profissionais do seu mergulho: pacote opcional de R$ 100, disponível só depois da experiência</li>
             <li>Abordagem ética, educativa e profissional, sempre priorizando o bem-estar animal</li>
           </ul>
           <div class="exp-meta">
@@ -750,10 +756,10 @@
           <ul class="feat-list" style="margin-bottom:6px;">
             <li>Equipamento completo: máscara, roupa de neoprene, nadadeira, regulador, colete, cilindro e lastro</li>
             <li>Travessia de bote ida e volta até a Ilha das Cabras</li>
-            <li>Fotos e vídeos subaquáticos do seu mergulho</li>
             <li>Acompanhamento durante toda a experiência</li>
           </ul>
-          <div class="alca-price"><b>R$ 599</b><span>/ pessoa</span></div>
+          <div class="alca-price"><b>R$ 399</b><span>/ pessoa</span></div>
+          <p style="color:var(--shallow-dim); font-size:14px; margin-top:2px;">Fotos e vídeos do mergulho não estão inclusos: pacote opcional de R$ 100, que só pode ser comprado depois da experiência.</p>
           <p style="color:var(--shallow-dim); font-size:14px; margin-top:2px;">As datas do mergulho são combinadas direto comigo pelo WhatsApp. Pagamento via Pix ou link de cartão.</p>
           <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="btn-primary" style="align-self:flex-start; margin-top:8px;">Ver agenda no WhatsApp</a>
         </div>
@@ -792,6 +798,14 @@
           <a href="https://www.google.com/maps/search/?api=1&query=Avenida%20Brasil%2C%201715%2C%20Pi%C3%BAva%2C%20Ilhabela%20SP" target="_blank" rel="noopener" class="btn-ghost" style="align-self:flex-start; margin-top:6px;">Abrir no mapa</a>
         </div>
       </div>
+      <div class="course-card reveal">
+        <div class="eyebrow">Cursos e certificações</div>
+        <h3>Aprenda a mergulhar com a gente</h3>
+        <p>Gostou de respirar embaixo d'água e quer ir além? A Prado's Dive, operadora onde eu trabalho em Ilhabela, oferece todas as certificações de mergulho.</p>
+        <p>Do primeiro curso, o <strong>Open Water Diver</strong>, até a formação de <strong>instrutor de mergulho</strong>: dá para fazer toda a sua formação aqui, sem sair da ilha.</p>
+        <div class="coupon"><span class="coupon-code">THECRAZY</span><span class="coupon-note">Cupom com desconto especial nos cursos da Prado's Dive</span></div>
+        <a href="https://ig.me/m/thecrazybiology" target="_blank" rel="noopener" class="btn-primary" style="justify-self:start;">Consultar disponibilidade no direct</a>
+      </div>
     </div>
   </section>
 
@@ -813,8 +827,8 @@
         <div class="contact-card">
           <div class="eyebrow" style="margin-bottom:16px;">The Ocean Dive</div>
           <p style="margin-bottom:6px;">09h00 às 12h00<br>Ilha das Cabras, Ilhabela</p>
-          <div class="price-big">R$ 599</div>
-          <div class="price-note">por pessoa</div>
+          <div class="price-big">R$ 399</div>
+          <div class="price-note">por pessoa · fotos e vídeos opcionais: R$ 100, após o mergulho</div>
           <p class="agenda-note">As datas do mergulho são combinadas direto comigo pelo WhatsApp. Toque no botão, me conte quantas pessoas e qual dia você prefere, e eu confirmo a disponibilidade.</p>
           <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro%20na%20Ilha%20das%20Cabras.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" target="_blank" rel="noopener" class="btn-primary" style="width:100%; text-align:center;">Ver agenda no WhatsApp</a>
         </div>
