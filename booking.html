@@ -347,6 +347,7 @@
         <div class="toolbar">
           <button class="mini-btn" onclick="openNewTripForm()">+ Nova saída</button>
           <button class="mini-btn" onclick="generateWeekends()">Gerar fins de semana (12 meses)</button>
+          <button class="mini-btn" onclick="applyCurrentPrices()">Atualizar preços das saídas</button>
         </div>
       </div>
       <div id="newTripForm" style="display:none; background:var(--deep); border:1px solid var(--line-2); padding:20px; margin-bottom:20px;">
@@ -1580,6 +1581,29 @@ async function holdAction(code, action, hours){
   const { ok, data } = await apiSend('/api/admin/holds/action', 'POST', { code, action, hours });
   if(!ok){ showToast('Ação não realizada: ' + (data.error||'erro')); return; }
   showToast('Feito.');
+  renderAdmin(); fetchTrips();
+}
+
+// Tabela de preços atual. Aplica em todas as saídas futuras de uma vez,
+// para não precisar editar data por data quando os valores mudam.
+const CURRENT_PRICES = { signature: 499, explorer: 399, alcatrazes: 599 };
+function targetPriceFor(t){
+  const line = t.line || 'signature';
+  if(String(t.destination||'').toLowerCase() === 'alcatrazes') return CURRENT_PRICES.alcatrazes;
+  return CURRENT_PRICES[line] || null;
+}
+async function applyCurrentPrices(){
+  const todayKey = fmtDate(todayStart());
+  const pending = ADMIN_TRIPS.filter(t => t.date >= todayKey && targetPriceFor(t) && Number(t.price) !== targetPriceFor(t));
+  if(!pending.length){ showToast('Todas as saídas futuras já estão com o preço atual.'); return; }
+  if(!confirm(`Atualizar ${pending.length} saída(s) futura(s) para os preços atuais?\n\nSignature: R$ ${CURRENT_PRICES.signature}\nExplorer: R$ ${CURRENT_PRICES.explorer}\nAlcatrazes: R$ ${CURRENT_PRICES.alcatrazes}`)) return;
+  let done = 0, failed = 0;
+  for(const t of pending){
+    const { ok } = await apiSend('/api/admin/trips', 'PATCH', { date: t.date, line: t.line || 'signature', price: targetPriceFor(t) });
+    if(ok) done++; else failed++;
+    showToast(`Atualizando preços... ${done + failed}/${pending.length}`);
+  }
+  showToast(failed ? `${done} atualizadas, ${failed} com erro. Tente de novo.` : `${done} saídas atualizadas.`);
   renderAdmin(); fetchTrips();
 }
 
