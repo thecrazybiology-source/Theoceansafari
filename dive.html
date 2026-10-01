@@ -60,7 +60,7 @@ header{position:fixed;inset:0 0 auto;z-index:30;padding-top:env(safe-area-inset-
 .burger{display:none;background:none;border:0;color:#d2d2d7;font-size:1.2rem;cursor:pointer;width:40px;height:40px}
 @media (max-width:860px){
   .burger{display:block}
-  .menu{display:none;position:fixed;top:calc(48px + env(safe-area-inset-top,0px));left:0;right:0;bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:24px 40px;background:rgba(0,0,0,.97)}
+  .menu{display:none;position:fixed;top:calc(48px + env(safe-area-inset-top,0px));left:0;right:0;height:calc(100dvh - 48px - env(safe-area-inset-top,0px));overflow-y:auto;flex-direction:column;align-items:flex-start;gap:6px;padding:24px 40px;background:rgba(0,0,0,.97)}
   .menu.aberto{display:flex}
   .menu a{font-size:1.75rem;font-weight:600;color:#e8e8ed;padding:6px 0;letter-spacing:-.02em}
   .menu .btn{margin-top:18px;font-size:1rem;padding:12px 22px}
@@ -238,6 +238,10 @@ footer{background:var(--grafite);padding:30px 0 calc(90px + env(safe-area-inset-
 .cupom{display:inline-block;margin-top:26px;padding:12px 22px;border-radius:14px;border:1px dashed rgba(111,214,230,.6);color:var(--azul);font-weight:600;letter-spacing:.06em}
 @media (max-width:520px){.numeros{gap:10px}.numeros span{font-size:.82rem}}
 
+body.menu-aberto{overflow:hidden}
+body.menu-aberto header{background:#000;backdrop-filter:none;-webkit-backdrop-filter:none}
+body.menu-aberto .menu{background:#000}
+body.menu-aberto .fixo{display:none!important}
 /* easter egg */
 .ohyes{position:fixed;inset:0;display:grid;place-items:center;z-index:50;pointer-events:none;font-family:"Brush Script MT","Segoe Script",cursive;font-size:clamp(3rem,12vw,7rem);opacity:0;transition:opacity .4s}
 .ohyes.on{opacity:1}
@@ -385,8 +389,8 @@ console.log("%cOh yes! 🐋","font:italic 28px cursive;color:#8fd6e4");
 
 // menu mobile
 const burger=document.getElementById("burger"),menu=document.getElementById("menu");
-burger.addEventListener("click",()=>{const a=menu.classList.toggle("aberto");burger.setAttribute("aria-expanded",a);burger.textContent=a?"✕":"☰";});
-menu.querySelectorAll("a").forEach(l=>l.addEventListener("click",()=>{menu.classList.remove("aberto");burger.setAttribute("aria-expanded","false");burger.textContent="☰";}));
+burger.addEventListener("click",()=>{const a=menu.classList.toggle("aberto");document.body.classList.toggle("menu-aberto",a);burger.setAttribute("aria-expanded",a);burger.textContent=a?"✕":"☰";});
+menu.querySelectorAll("a").forEach(l=>l.addEventListener("click",()=>{menu.classList.remove("aberto");document.body.classList.remove("menu-aberto");burger.setAttribute("aria-expanded","false");burger.textContent="☰";}));
 
 // botão fixo de reserva: aparece depois do topo e some no fechamento
 const fixo=document.getElementById("fixo"),final=document.querySelector("#agendar");
