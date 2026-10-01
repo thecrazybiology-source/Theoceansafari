@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>The Ocean Dive · TheCrazyBiology · Ilhabela</title>
-<meta name="description" content="The Ocean Dive: seu primeiro mergulho de cilindro em Ilhabela, com Daniel Munhoz, biólogo e instrutor de mergulho. Sem experiência e sem precisar saber nadar.">
+<meta name="description" content="The Ocean Dive: seu primeiro mergulho de cilindro em Ilhabela, com Daniel Munhoz, biólogo e instrutor de mergulho certificado. Sem experiência e sem precisar saber nadar.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -216,6 +216,10 @@ footer{background:var(--grafite);padding:30px 0 calc(90px + env(safe-area-inset-
 
 
 /* página do Dive */
+.hero-dive{position:relative;isolation:isolate}
+.fundo-hero{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1}
+.veu-hero{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.35) 45%,#000 100%)}
+
 .hero-dive{min-height:92svh;display:flex;align-items:center;justify-content:center;text-align:center;padding:130px 0 90px;background:radial-gradient(90% 70% at 50% 40%,var(--navy-2),#000 75%)}
 .hero-dive .estampa{opacity:.22;width:min(980px,150vw);left:50%;top:50%;translate:-50% -50%;animation:none}
 .hero-dive .tag{color:var(--azul)}
@@ -263,10 +267,11 @@ footer{background:var(--grafite);padding:30px 0 calc(90px + env(safe-area-inset-
 <!-- 1. HERO -->
 <section class="hero-dive">
   <img class="estampa" src="https://www.thecrazybiology.com/images/estampa-manta.webp" alt="" aria-hidden="true" style="">
+  <video class="fundo-hero" muted loop playsinline autoplay preload="metadata"><source src="https://www.thecrazybiology.com/images/dive-tartaruga-video.mp4" type="video/mp4"><source src="https://www.thecrazybiology.com/images/dive-tartaruga.mp4" type="video/mp4"><source src="https://www.thecrazybiology.com/images/dive_tartaruga_video.mp4" type="video/mp4"><source src="https://www.thecrazybiology.com/images/dive-tartaruga-video.MP4" type="video/mp4"><source src="https://www.thecrazybiology.com/images/Dive%20tartaruga%20video.mp4" type="video/mp4"><source src="https://www.thecrazybiology.com/images/dive%20tartaruga%20video.mp4" type="video/mp4"><source src="https://www.thecrazybiology.com/images/tartaruga-dive.mp4" type="video/mp4"><source src="https://www.thecrazybiology.com/images/dive-tartaruga.MP4" type="video/mp4"></video><div class="veu-hero"></div>
   <div class="wrap">
     <span class="tag">The Ocean Dive · Mergulho de cilindro</span>
     <h1>Respire embaixo d'água.</h1>
-    <p>Seu primeiro mergulho de cilindro em Ilhabela, com Daniel Munhoz, biólogo e instrutor de mergulho. Sem experiência e sem precisar saber nadar.</p>
+    <p>Seu primeiro mergulho de cilindro em Ilhabela, com Daniel Munhoz, biólogo e instrutor de mergulho certificado. Sem experiência e sem precisar saber nadar.</p>
     <div class="acoes">
       <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20interesse%20no%20The%20Ocean%20Dive%2C%20o%20mergulho%20de%20cilindro.%20Quais%20datas%20voc%C3%AA%20tem%20dispon%C3%ADveis%3F" class="btn btn-1">Ver agenda no WhatsApp</a>
       <a href="#como" class="btn btn-2">Como funciona</a>
