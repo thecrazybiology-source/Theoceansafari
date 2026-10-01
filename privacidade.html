@@ -1,83 +1,278 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<!-- Oh yes! 🐋 -->
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#020308">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
 <title>Política de Privacidade · The Ocean Safari</title>
+<meta name="description" content="Política de privacidade do The Ocean Safari e TheCrazyBiology, conforme a LGPD.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --abyss:#020308;
-    --deep:#0a1330;
-    --foam:#eef0f5;
-    --shallow:#9aa5c0;
-    --shallow-dim: rgba(154,165,192,0.6);
-    --amber:#b8c6ff;
-    --amber-dim:#7d8fd8;
-    --line: rgba(238,240,245,0.1);
-    --line-2: rgba(238,240,245,0.18);
-    --serif: 'Instrument Serif', serif;
-    --sans: 'Hanken Grotesk', sans-serif;
-    --mono: 'Space Mono', monospace;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--abyss); color:var(--foam);
-    font-family:var(--sans); font-size:16px; line-height:1.65;
-    -webkit-font-smoothing:antialiased;
-  }
-  a{ color:var(--amber); }
-  header{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 24px; border-bottom:1px solid var(--line);
-    position:sticky; top:0; background:rgba(2,3,8,0.86); backdrop-filter:blur(10px); z-index:10;
-  }
-  .logo{
-    font-family:var(--sans); font-size:17px; font-weight:700; letter-spacing:-0.01em; display:inline-flex; align-items:center; gap:9px; text-decoration:none; color:var(--foam);
-  }
-  .logo img, .logo .logo-img{ width:auto; height:48px; flex-shrink:0; object-fit:contain; display:block; }
-  .back{ font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--shallow); text-decoration:none; }
-  main{ max-width:720px; margin:0 auto; padding:48px 24px 80px; }
-  .eyebrow{ font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--amber); margin-bottom:10px; }
-  h1{ font-family:var(--serif); font-weight:400; font-size:36px; margin:0 0 6px; }
-  .updated{ color:var(--shallow-dim); font-size:13px; margin-bottom:40px; }
-  h2{ font-family:var(--sans); font-weight:600; font-size:19px; color:var(--foam); margin:40px 0 12px; }
-  h2:first-of-type{ margin-top:0; }
-  p{ color:var(--shallow); margin:0 0 14px; }
-  ul{ margin:0 0 14px; padding-left:20px; color:var(--shallow); }
-  li{ margin-bottom:8px; }
-  table{ width:100%; border-collapse:collapse; margin:16px 0 24px; font-size:14px; }
-  th,td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th{ font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--amber); }
-  td{ color:var(--shallow); }
-  .note{ background:rgba(184,198,255,0.08); border:1px solid rgba(184,198,255,0.25); border-radius:10px; padding:16px 18px; font-size:14px; color:var(--shallow); margin:20px 0; }
-  footer{ text-align:center; padding:30px 24px; border-top:1px solid var(--line); font-family:var(--mono); font-size:10.5px; color:var(--shallow-dim); }
+:root{
+  --preto:#000; --grafite:#07101d; --navy:#0a1628; --navy-2:#0f2140;
+  --branco:#f5f5f7; --cinza:#a1a1a6; --cinza-2:#6e6e73;
+  --azul:#6fd6e6; --azul-btn:#6fd6e6; --linha:rgba(111,214,230,.14);
+  --fonte:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --larg:1024px; --raio:28px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:60px}
+body{margin:0;background:var(--preto);color:var(--branco);font:400 17px/1.47 var(--fonte);letter-spacing:-.022em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--azul);outline-offset:3px;border-radius:6px}
+h1,h2,h3{font-family:var(--fonte);font-weight:600;margin:0;letter-spacing:-.03em}
+h2{font-size:clamp(2.2rem,6vw,3.5rem);line-height:1.07;max-width:20ch;margin:0 auto;text-align:center}
+h3{font-size:1.5rem;line-height:1.15;letter-spacing:-.02em}
+p{margin:0 0 1em;max-width:60ch}
+.wrap{max-width:var(--larg);margin:0 auto;padding:0 22px;position:relative;z-index:1}
+section{padding:110px 0;position:relative;overflow:hidden}
+.intro{color:var(--cinza);margin:16px auto 0;font-size:1.2rem;line-height:1.4;text-align:center;max-width:40ch}
+.tag{display:block;text-align:center;color:var(--cinza);font-size:1.05rem;font-weight:600;margin-bottom:6px}
+
+/* estampas: line-art discreta atrás do conteúdo */
+.estampa{position:absolute;z-index:0;pointer-events:none;opacity:.17;width:min(820px,130vw);transform:rotate(var(--r,0deg)) scaleX(var(--s,1));animation:deriva 20s ease-in-out infinite alternate}
+@keyframes deriva{to{translate:0 -24px}}
+/* faixa de foto em tela cheia */
+.faixa{margin:0;padding:40px 0 20px;background:var(--preto)}
+.faixa img{width:100%;max-width:1200px;margin:0 auto;height:auto}
+.faixa figcaption{text-align:center;padding:26px 22px 0}
+.faixa b{display:block;font-size:clamp(1.6rem,4.5vw,2.6rem);font-weight:600;letter-spacing:-.03em;line-height:1.1}
+.faixa figcaption{color:var(--cinza);font-size:.85rem}
+.faixa b{color:var(--branco);margin-bottom:8px}
+
+/* botões no padrão Apple */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 22px;border-radius:999px;font-weight:400;font-size:1.05rem;text-decoration:none;transition:background .2s,color .2s;letter-spacing:-.01em}
+.btn-1{background:var(--azul-btn);color:#00151c;font-weight:500}
+.btn-1:hover{background:#a6e9f2}
+.btn-2{border:1px solid var(--azul);color:var(--azul)}
+.btn-2:hover{background:var(--azul);color:#00151c}
+.acoes{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:28px}
+
+/* navegação fina e translúcida */
+header{position:fixed;inset:0 0 auto;z-index:30;padding-top:env(safe-area-inset-top,0px);background:rgba(3,9,18,.78);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--linha)}
+.nav{max-width:var(--larg);margin:0 auto;height:48px;padding:0 22px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo img{height:22px;width:auto}
+.menu{display:flex;gap:32px;align-items:center}
+.menu a{text-decoration:none;color:#d2d2d7;font-size:.78rem;letter-spacing:-.01em}
+.menu a:hover{color:#fff}
+.menu .btn{font-size:.78rem;padding:5px 14px;color:#00151c}
+.burger{display:none;background:none;border:0;color:#d2d2d7;font-size:1.2rem;cursor:pointer;width:40px;height:40px}
+@media (max-width:860px){
+  .burger{display:block}
+  .menu{display:none;position:fixed;top:calc(48px + env(safe-area-inset-top,0px));left:0;right:0;bottom:0;flex-direction:column;align-items:flex-start;gap:6px;padding:24px 40px;background:rgba(0,0,0,.97)}
+  .menu.aberto{display:flex}
+  .menu a{font-size:1.75rem;font-weight:600;color:#e8e8ed;padding:6px 0;letter-spacing:-.02em}
+  .menu .btn{margin-top:18px;font-size:1rem;padding:12px 22px}
+}
+
+/* hero */
+.hero{padding:120px 0 0;text-align:center;background:var(--preto)}
+.hero-foto{margin:56px auto 0;max-width:1400px}
+.hero-foto img{width:100%;height:auto}
+.hero-foto figcaption{color:var(--cinza-2);font-size:.8rem;margin-top:12px;text-align:center}
+.hero h1{font-size:clamp(2.8rem,9vw,5.5rem);line-height:1.05;max-width:13ch;margin:0 auto;letter-spacing:-.035em}
+.hero p{font-size:clamp(1.15rem,2.4vw,1.5rem);line-height:1.35;color:#e8e8ed;margin:20px auto 0;max-width:34ch}
+
+/* quem somos */
+.sobre{background:var(--grafite)}
+.sobre .grade{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.sobre h2,.sobre .tag,.sobre .intro{text-align:left;margin-left:0}
+.sobre .intro{max-width:none;margin-bottom:16px}
+.sobre p{color:var(--cinza)}
+.sobre figure{margin:0}
+.sobre img{width:100%;object-fit:cover}
+.retrato img{aspect-ratio:4/5;border-radius:var(--raio)}
+.retrato figcaption{color:var(--cinza-2);font-size:.82rem;margin-top:10px}
+.registros{display:flex;align-items:flex-start;gap:16px;margin-top:56px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;scrollbar-width:none;justify-content:safe center}
+.registros::-webkit-scrollbar{display:none}
+.registros figure{margin:0;flex:0 0 min(520px,86vw);scroll-snap-align:center;position:relative}
+.registros img{width:100%;height:auto;border-radius:var(--raio);background:var(--navy)}
+.registros figcaption{color:var(--cinza);font-size:.85rem;margin-top:12px;text-align:center}
+.aviso-registros{color:var(--cinza-2);font-size:.8rem;text-align:center;margin:14px auto 0;max-width:46ch}
+.imprensa{margin-top:28px;padding-top:22px;border-top:1px solid var(--linha)}
+.imprensa p{font-size:.85rem;color:var(--cinza-2);margin-bottom:10px}
+.imprensa ul{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px 22px}
+.imprensa a{color:var(--azul);text-decoration:none;font-size:.95rem}
+.imprensa a::after{content:" ›"}
+.imprensa a:hover{text-decoration:underline}
+@media (max-width:860px){.sobre .grade{grid-template-columns:1fr;gap:44px}.retrato img{aspect-ratio:1/1}}
+
+/* vídeos */
+.videos{display:flex;gap:16px;margin-top:48px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;scrollbar-width:none;justify-content:safe center}
+.videos::-webkit-scrollbar{display:none}
+.videos figure{margin:0;flex:0 0 min(300px,72vw);scroll-snap-align:center}
+.videos video{width:100%;border-radius:var(--raio);aspect-ratio:9/16;object-fit:cover;background:var(--grafite)}
+.videos figcaption{color:var(--cinza);font-size:.85rem;margin-top:12px;text-align:center}
+
+/* experiências: tiles */
+.experiencias{background:var(--preto)}
+.exp-grade{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:52px}
+.exp{position:relative;overflow:hidden;border-radius:var(--raio);padding:52px 32px 36px;display:flex;flex-direction:column;align-items:center;text-align:center;min-height:560px;background:var(--grafite);isolation:isolate}
+.exp:first-child{grid-column:1/-1;min-height:620px}
+.exp>.fundo{position:absolute;inset:0;z-index:-1;width:100%;height:100%;object-fit:cover}
+.exp>.fundo+.veu{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,rgba(0,0,0,.35) 45%,rgba(0,0,0,.85) 100%)}
+.exp .estampa{opacity:.2;animation:none;width:130%;left:-15%;bottom:-20%;top:auto}
+.exp>*:not(.fundo):not(.veu):not(.estampa){position:relative;z-index:1}
+.exp .tag{background:none;margin:0 0 6px;font-size:.95rem;color:#e8e8ed;backdrop-filter:none}
+.exp h3{font-size:clamp(2rem,4.5vw,2.8rem);letter-spacing:-.03em;margin-bottom:12px}
+.exp p{color:#d2d2d7;font-size:1.02rem;max-width:44ch}
+.exp .preco{font-size:1.05rem;font-weight:400;color:#e8e8ed;margin:4px 0 0;letter-spacing:-.01em}
+.exp .preco small{font-size:inherit;color:var(--cinza)}
+.precos{display:flex;gap:22px;justify-content:center;margin:4px 0 0}
+.precos .preco small{display:inline;color:var(--cinza)}
+.precos .preco small::after{content:" "}
+.exp .btn{margin-top:auto}
+.exp .preco+.btn,.exp .precos+.btn{margin-top:26px}
+.exp .extra{margin:12px 0 0;font-size:.8rem;color:var(--cinza)}
+@media (max-width:860px){.exp-grade{grid-template-columns:1fr}.exp,.exp:first-child{min-height:500px;padding:44px 24px 32px}}
+
+/* safari: Signature × Explorer */
+.safari{background:var(--grafite)}
+.comparar{margin-top:52px;border-radius:var(--raio);background:#0c1828;overflow:hidden}
+.comparar table{width:100%;border-collapse:collapse;table-layout:fixed}
+.comparar thead th{padding:36px 18px 28px;vertical-align:top;text-align:center;font-weight:400}
+.comparar .nome{display:block;font-size:clamp(1.6rem,4vw,2.2rem);font-weight:600;letter-spacing:-.03em}
+.comparar .valor{display:block;margin:6px 0 18px;font-size:1rem;color:#e8e8ed}
+.comparar .valor small{font-size:inherit;color:var(--cinza)}
+.comparar thead .btn{padding:9px 20px;font-size:.95rem}
+.comparar .sig{background:rgba(15,33,64,.85)}
+.comparar thead th.sig{background:linear-gradient(180deg,var(--navy-2),rgba(15,33,64,.85))}
+.comparar .rotulo th{padding:22px 18px 6px;font-size:.78rem;font-weight:400;color:var(--cinza-2);text-align:center;border-top:1px solid var(--linha)}
+.comparar td{padding:6px 18px 22px;text-align:center;font-size:1rem;vertical-align:top;line-height:1.35}
+.comparar td.junto{color:#d2d2d7}
+.comparar tbody tr:not(.rotulo) .sig{background:rgba(15,33,64,.55)}
+.comparar .rotulo+tr td.sig{border-radius:0}
+@media (max-width:520px){.comparar thead th{padding:28px 10px 22px}.comparar td{padding:6px 10px 20px;font-size:.92rem}}
+.incluso{display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:72px}
+.incluso h3{font-size:1.6rem}
+.incluso ul{list-style:none;padding:0;margin:18px 0 0}
+.incluso li{padding:12px 0;border-top:1px solid var(--linha);color:#d2d2d7}
+.incluso p{color:#d2d2d7}
+.nota{color:var(--cinza-2);font-size:.8rem;margin-top:14px}
+@media (max-width:860px){.incluso{grid-template-columns:1fr}}
+
+/* animais: carrossel */
+.animais{background:var(--preto)}
+.trilho{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:22px;margin:48px auto 0;padding:0 22px 10px;scrollbar-width:none;max-width:var(--larg);position:relative;z-index:1}
+.trilho::-webkit-scrollbar{display:none}
+.bicho{flex:0 0 220px;scroll-snap-align:start;border-radius:var(--raio);background:var(--grafite);overflow:hidden}
+.bicho img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.bicho div{padding:16px 18px 20px}
+.bicho h3{font-size:1.1rem;letter-spacing:-.02em}
+.bicho i{display:block;color:var(--cinza-2);font-size:.8rem;margin-top:3px}
+.bicho p{font-size:.85rem;color:var(--cinza);margin:10px 0 0}
+.dica{color:var(--cinza-2);font-size:.82rem;margin:14px auto 0;text-align:center}
+
+/* como funciona */
+.passos{list-style:none;padding:0;margin:52px 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:28px;counter-reset:p;text-align:center}
+.passos li{counter-increment:p}
+.passos li::before{content:counter(p);display:block;font-size:3rem;font-weight:300;letter-spacing:-.04em;color:var(--azul);margin-bottom:10px}
+.passos h3{font-size:1.2rem;margin-bottom:8px}
+.passos p{font-size:.95rem;color:var(--cinza);margin:0 auto}
+@media (max-width:860px){.passos{grid-template-columns:1fr 1fr;gap:36px 20px}}
+
+/* para quem é */
+.paraquem{background:var(--grafite)}
+.paraquem .intro{max-width:48ch}
+
+/* indicações */
+.indica-grade{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:48px}
+.indica-item{border-radius:var(--raio);padding:36px 30px;background:var(--grafite);text-align:center}
+.indica-item h3{font-size:1.9rem;margin-bottom:10px}
+.indica-item p{color:var(--cinza);margin:0 auto}
+@media (max-width:860px){.indica-grade{grid-template-columns:1fr}}
+
+/* depoimentos */
+.depo{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;margin-top:48px;scrollbar-width:none;padding-bottom:6px}
+.depo::-webkit-scrollbar{display:none}
+.depo blockquote{flex:0 0 min(360px,84vw);scroll-snap-align:start;margin:0;border-radius:var(--raio);padding:32px 28px;background:var(--grafite);font-size:1.1rem;line-height:1.45;letter-spacing:-.02em}
+.depo cite{display:block;margin-top:18px;font-style:normal;font-size:.8rem;color:var(--cinza-2)}
+
+/* faq */
+.faq{background:var(--grafite)}
+.faq-lista{margin:48px auto 0;max-width:760px}
+.faq details{border-bottom:1px solid var(--linha);padding:22px 0}
+.faq summary{cursor:pointer;font-weight:600;font-size:1.1rem;list-style:none;display:flex;justify-content:space-between;gap:16px;align-items:center;letter-spacing:-.02em}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-weight:300;font-size:1.6rem;color:var(--cinza);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{color:var(--cinza);margin:12px 0 0}
+
+/* fechamento */
+.final{text-align:center;background:var(--preto);padding:130px 0}
+.final h2{max-width:14ch}
+footer{background:var(--grafite);padding:30px 0 calc(90px + env(safe-area-inset-bottom,0px));font-size:.75rem;color:var(--cinza-2);border-top:1px solid var(--linha)}
+.rodape{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;justify-content:space-between}
+.rodape nav{display:flex;flex-wrap:wrap;gap:8px 20px}
+.rodape a{text-decoration:none;color:var(--cinza)}
+.rodape a:hover{text-decoration:underline}
+.rodape img{height:22px;width:auto}
+
+/* botão fixo de reserva no celular */
+.fixo{display:none}
+@media (max-width:860px){
+  .fixo{display:flex;position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:25;padding:14px;box-shadow:0 8px 24px rgba(0,0,0,.5);transition:transform .3s,opacity .3s}
+  .fixo.oculto{transform:translateY(140%);opacity:0}
+}
+
+
+/* página de privacidade */
+.doc{padding:130px 0 100px}
+.doc .wrap{max-width:760px}
+.doc h1{font-size:clamp(2.4rem,7vw,3.6rem);line-height:1.07;letter-spacing:-.035em;text-align:center}
+.atualizado{text-align:center;color:var(--cinza-2);font-size:.9rem;margin:12px auto 48px}
+.doc h2{font-size:1.4rem;text-align:left;max-width:none;margin:48px 0 14px;letter-spacing:-.02em}
+.doc p,.doc li{color:#c7cbd3;max-width:none}
+.doc ul{padding-left:20px;margin:0 0 16px}
+.doc li{margin-bottom:8px}
+.doc .tabela{overflow-x:auto;border-radius:22px;background:#0c1828;margin:16px 0 24px}
+.doc table{width:100%;min-width:560px;border-collapse:collapse;font-size:.92rem}
+.doc th,.doc td{text-align:left;padding:14px 16px;border-bottom:1px solid var(--linha);vertical-align:top}
+.doc tr:last-child td{border-bottom:0}
+.doc th{font-weight:600;color:var(--azul);font-size:.85rem}
+.doc td{color:#c7cbd3}
+.nota-box{background:rgba(111,214,230,.08);border-radius:18px;padding:18px 20px;color:#c7cbd3;font-size:.95rem;margin:24px 0}
+.rodape-doc{margin-top:40px!important;font-size:.85rem;color:var(--cinza-2)!important}
+
+/* easter egg */
+.ohyes{position:fixed;inset:0;display:grid;place-items:center;z-index:50;pointer-events:none;font-family:"Brush Script MT","Segoe Script",cursive;font-size:clamp(3rem,12vw,7rem);opacity:0;transition:opacity .4s}
+.ohyes.on{opacity:1}
+
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 
 <header>
-  <a href="index.html" class="logo"><img src="images/logo-thecrazybiology-escuro.webp" width="984" height="658" alt="TheCrazyBiology" class="logo-img"></a>
-  <a href="index.html" class="back">← Voltar ao site</a>
+  <div class="nav">
+    <a href="https://www.thecrazybiology.com/" class="logo" id="logo" aria-label="TheCrazyBiology, página inicial"><img src="https://www.thecrazybiology.com/images/logo-thecrazybiology-escuro.webp" alt="TheCrazyBiology" width="160" height="30"></a>
+    <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">☰</button>
+    <nav class="menu" id="menu">
+      <a href="https://www.thecrazybiology.com/#safari">Safari</a>
+      <a href="https://www.thecrazybiology.com/dive.html">Dive</a>
+      <a href="https://www.thecrazybiology.com/#animais">Animais</a>
+      <a href="https://www.thecrazybiology.com/#sobre">Quem somos</a>
+      <a href="https://www.thecrazybiology.com/#faq">Dúvidas</a>
+      <a href="https://www.thecrazybiology.com/booking.html" class="btn btn-1">Reservar</a>
+    </nav>
+  </div>
 </header>
 
-<main>
-  <div class="eyebrow">The Ocean Safari</div>
-  <h1>Política de Privacidade</h1>
-  <div class="updated">Versão 1.0 · vigente desde 01/09/2026</div>
+<main id="top">
+<section class="doc">
+  <div class="wrap">
+    <span class="tag">The Ocean Safari</span>
+    <h1>Política de Privacidade</h1>
+    <p class="atualizado">Versão 1.0 · vigente desde 01/09/2026</p>
 
   <p>Esta política explica quais dados o The Ocean Safari coleta quando você faz uma reserva, por que coleta, e quais são os seus direitos sobre essas informações, em conformidade com a Lei Geral de Proteção de Dados (LGPD, Lei 13.709/2018).</p>
 
   <h2>1. Quais dados coletamos e por quê</h2>
-  <table>
+  <div class="tabela"><table>
     <tr><th>Dado</th><th>Finalidade</th><th>Base legal</th></tr>
     <tr>
       <td>Nome, CPF, e-mail e telefone</td>
@@ -99,9 +294,9 @@
       <td>Processamento da cobrança</td>
       <td>Execução de contrato — o pagamento é combinado diretamente com a equipe pelo WhatsApp (Pix ou link de pagamento por cartão); não há checkout no site e não armazenamos dados de cartão em nosso servidor</td>
     </tr>
-  </table>
+  </table></div>
 
-  <div class="note">A informação de saúde é sempre coletada como uma pergunta objetiva (sim/não, com espaço livre e opcional para detalhar), nunca como um histórico médico. Ela só é usada para avaliar sua segurança durante a atividade e nunca é compartilhada além do estritamente necessário para a operação.</div>
+  <div class="nota-box">A informação de saúde é sempre coletada como uma pergunta objetiva (sim/não, com espaço livre e opcional para detalhar), nunca como um histórico médico. Ela só é usada para avaliar sua segurança durante a atividade e nunca é compartilhada além do estritamente necessário para a operação.</div>
 
   <h2>2. Por quanto tempo guardamos seus dados</h2>
   <p>Mantemos os dados da sua reserva e do seu aceite pelo prazo necessário para cumprir obrigações legais e para eventual defesa em caso de reclamação de consumo. Após esse período, os dados são eliminados ou anonimizados.</p>
@@ -126,10 +321,32 @@
   <h2>6. Alterações a esta política</h2>
   <p>Esta política pode ser atualizada. Alterações relevantes serão comunicadas no site, com a data de vigência atualizada no topo desta página. Alterações futuras não afetam retroativamente os aceites já registrados sob uma versão anterior.</p>
 
-  <p style="margin-top:32px; font-size:13px; color:var(--shallow-dim);">Este documento é um modelo de referência e não substitui a revisão de um advogado ou de um encarregado de proteção de dados (DPO).</p>
+  <p class="rodape-doc">Este documento é um modelo de referência e não substitui a revisão de um advogado ou de um encarregado de proteção de dados (DPO).</p>
+  </div>
+</section>
 </main>
+<footer>
+  <div class="wrap rodape">
+    <img src="https://www.thecrazybiology.com/images/logo-thecrazybiology-escuro.webp" alt="TheCrazyBiology" width="150" height="28">
+    <nav aria-label="Rodapé">
+      <a href="https://instagram.com/thecrazybiology">Instagram</a>
+      <a href="mailto:contato@thecrazybiology.com">contato@thecrazybiology.com</a>
+      <a href="https://www.thecrazybiology.com/products.html">The Products</a>
+      <a href="https://www.thecrazybiology.com/privacidade.html">Privacidade</a>
+    </nav>
+    <span>© 2026 TheCrazyBiology, Ilhabela SP</span>
+  </div>
+</footer>
 
-<footer>© 2026 TheCrazyBiology · Ilhabela, SP</footer>
+<div class="ohyes" id="ohyes" aria-hidden="true">Oh yes! 🐋</div>
 
+<script>
+console.log("%cOh yes! 🐋","font:italic 28px cursive;color:#6fd6e6");
+const burger=document.getElementById("burger"),menu=document.getElementById("menu");
+burger.addEventListener("click",()=>{const a=menu.classList.toggle("aberto");burger.setAttribute("aria-expanded",a);burger.textContent=a?"✕":"☰";});
+menu.querySelectorAll("a").forEach(l=>l.addEventListener("click",()=>{menu.classList.remove("aberto");burger.setAttribute("aria-expanded","false");burger.textContent="☰";}));
+let c=0,t;const egg=document.getElementById("ohyes");
+document.getElementById("logo").addEventListener("click",e=>{c++;clearTimeout(t);t=setTimeout(()=>c=0,1500);if(c>=5){e.preventDefault();c=0;egg.classList.add("on");setTimeout(()=>egg.classList.remove("on"),1800);}});
+</script>
 </body>
 </html>

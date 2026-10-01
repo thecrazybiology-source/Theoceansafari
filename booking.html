@@ -12,15 +12,16 @@
 <title>Reservar · The Ocean Safari</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --abyss:#020308; --deep:#0a1330; --deep-2:#0d1a3d; --deep-3:#132350;
-    --foam:#eef0f5; --shallow:#9aa5c0; --shallow-dim:#5b6687;
-    --amber:#b8c6ff; --amber-dim:#7d8fd8;
-    --green:#7fb885; --red:#c97f6f;
-    --line: rgba(238,240,245,0.1); --line-2: rgba(238,240,245,0.18);
-    --serif:'Instrument Serif',serif; --sans:'Hanken Grotesk',sans-serif; --mono:'Space Mono',monospace;
+    --abyss:#000; --deep:#07101d; --deep-2:#0c1828; --deep-3:#11223a;
+    --foam:#f5f5f7; --shallow:#a1a1a6; --shallow-dim:#6e6e73;
+    --amber:#6fd6e6; --amber-dim:#4fb8c9;
+    --green:#7fd1a0; --red:#e08b7a;
+    --line: rgba(111,214,230,0.14); --line-2: rgba(255,255,255,0.16);
+    --fonte:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Inter","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --serif:var(--fonte); --sans:var(--fonte); --mono:var(--fonte);
   }
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--abyss); color:var(--foam); font-family:var(--sans); font-weight:300; line-height:1.6; min-height:100vh;}
@@ -87,7 +88,7 @@
   .detail-empty{ margin:auto; text-align:center; color:var(--shallow-dim); font-family:var(--mono); font-size:12px; padding:40px 10px; }
   .detail-status{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:5px 10px; border-radius:20px; display:inline-block; width:fit-content; margin-bottom:16px; }
   .detail-status.ok{ background:rgba(127,184,133,.14); color:var(--green); }
-  .detail-status.low{ background:rgba(184,198,255,.14); color:var(--amber); }
+  .detail-status.low{ background:rgba(111,214,230,.14); color:var(--amber); }
   .detail-status.full{ background:rgba(201,127,111,.14); color:var(--red); }
   .detail-panel h3{ font-size:24px; margin-bottom:18px; }
   .detail-rows{ display:flex; flex-direction:column; gap:14px; margin-bottom:24px; }
@@ -115,7 +116,7 @@
   .detail-price small{ font-family:var(--sans); font-size:13px; color:var(--shallow); }
   .btn{ font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:15px 22px; border-radius:2px; border:none; text-align:center; transition:all .2s ease; }
   .btn-primary{ background:var(--amber); color:var(--abyss); }
-  .btn-primary:hover{ background:#d9e0ff; transform:translateY(-1px); }
+  .btn-primary:hover{ background:#a6e9f2; transform:translateY(-1px); }
   .btn-primary:disabled{ background:var(--shallow-dim); color:var(--abyss); opacity:.5; cursor:not-allowed; transform:none; }
   .btn-ghost{ background:none; border:1px solid var(--line-2); color:var(--foam); }
   .btn-ghost:hover{ border-color:var(--amber); color:var(--amber); }
@@ -156,7 +157,7 @@
 
   .pay-options{ display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
   .pay-opt{ display:flex; align-items:center; gap:14px; border:1px solid var(--line-2); padding:16px; cursor:pointer; transition:all .2s ease; }
-  .pay-opt.sel{ border-color:var(--amber); background:rgba(184,198,255,.06); }
+  .pay-opt.sel{ border-color:var(--amber); background:rgba(111,214,230,.06); }
   .pay-opt input{ accent-color:var(--amber); }
   .pay-opt .pname{ font-size:14px; color:var(--foam); }
   .pay-opt .psub{ font-family:var(--mono); font-size:10px; color:var(--shallow-dim); margin-top:2px; }
@@ -175,7 +176,7 @@
   .demo-note{ font-family:var(--mono); font-size:10px; color:var(--shallow-dim); text-align:center; margin-top:16px; line-height:1.7; }
 
   /* Termos / aceite eletrônico */
-  .micro-resumo{ background:rgba(184,198,255,0.08); border:1px solid rgba(184,198,255,0.25); border-radius:10px; padding:14px 16px; margin-bottom:18px; }
+  .micro-resumo{ background:rgba(111,214,230,0.08); border:1px solid rgba(111,214,230,0.25); border-radius:10px; padding:14px 16px; margin-bottom:18px; }
   .micro-resumo li{ font-size:12.5px; color:var(--shallow); margin-bottom:6px; line-height:1.5; }
   .micro-resumo li:last-child{ margin-bottom:0; }
   .consent-row{ display:flex; align-items:flex-start; gap:10px; padding:12px 0; border-bottom:1px solid var(--line); }
@@ -187,7 +188,7 @@
   .health-box .q{ font-size:13px; color:var(--foam); margin-bottom:10px; }
   .health-opts{ display:flex; gap:10px; margin-bottom:10px; }
   .health-opts button{ flex:1; padding:9px; border-radius:8px; border:1px solid var(--line-2); background:transparent; color:var(--shallow); font-family:var(--sans); font-size:13px; cursor:pointer; }
-  .health-opts button.sel{ border-color:var(--amber); color:var(--foam); background:rgba(184,198,255,0.12); }
+  .health-opts button.sel{ border-color:var(--amber); color:var(--foam); background:rgba(111,214,230,0.12); }
   .participant-card{ border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; }
   .participant-card .pnum{ font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--amber); margin-bottom:10px; }
   .link-row{ display:flex; align-items:center; gap:8px; margin-top:8px; }
@@ -235,7 +236,7 @@
   tbody tr:hover{ background:rgba(238,240,245,0.02); }
   .badge{ font-family:var(--mono); font-size:10px; padding:4px 9px; border-radius:20px; text-transform:uppercase; }
   .badge.ok{ background:rgba(127,184,133,.14); color:var(--green); }
-  .badge.low{ background:rgba(184,198,255,.14); color:var(--amber); }
+  .badge.low{ background:rgba(111,214,230,.14); color:var(--amber); }
   .badge.full{ background:rgba(201,127,111,.14); color:var(--red); }
   .badge.blocked{ background:rgba(238,240,245,.08); color:var(--shallow); }
   .mini-btn{ font-family:var(--mono); font-size:10px; text-transform:uppercase; background:none; border:1px solid var(--line-2); color:var(--shallow); padding:6px 10px; border-radius:2px; margin-right:6px; }
@@ -249,6 +250,53 @@
   .empty-note{ font-family:var(--mono); font-size:11px; color:var(--shallow-dim); padding:20px; text-align:center; }
   .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--foam); color:var(--abyss); font-family:var(--mono); font-size:12px; padding:12px 22px; border-radius:30px; opacity:0; transition:all .3s ease; z-index:200; pointer-events:none; }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ===== Padrão visual do site (estilo Apple + TheCrazyBiology) ===== */
+  body{ font-weight:400; letter-spacing:-.01em; -webkit-font-smoothing:antialiased; }
+  .eyebrow,.tab,.btn,.legend,.cal-dow,.cal-day .d,.detail-status,.detail-row span:first-child,.field label,
+  .qty-note,.pay-opt .psub,.demo-note,.participant-card .pnum,.accept-status,.docviewer-body .version-tag,
+  .policy-note,.astat span,thead th,.badge,.mini-btn,.empty-note,.toast,.detail-empty,.link-row input{
+    text-transform:none !important; letter-spacing:-.005em !important;
+  }
+  h1,h2,h3{ font-weight:600; letter-spacing:-.03em; }
+  .booking-head h1{ font-size:clamp(2.2rem,6vw,3.4rem); line-height:1.07; }
+  .eyebrow{ font-size:15px; font-weight:600; color:var(--shallow); }
+  .eyebrow::before{ display:none; }
+  header{ background:rgba(3,9,18,.78); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px); }
+  .logo img, .logo .logo-img{ height:34px; }
+  .tabs{ background:rgba(255,255,255,.06); border-color:transparent; }
+  .tab{ font-size:13px; font-weight:500; white-space:nowrap; }
+  @media (max-width:400px){ .tab{ font-size:12px; padding:7px 9px; } }
+  .tab.active{ background:var(--amber); color:#00151c; }
+  .legend{ font-size:13px; }
+  .cal-shell{ border-radius:28px; overflow:hidden; border-color:var(--line); }
+  .cal-panel{ background:#07101d; }
+  .detail-panel{ background:#0c1828; }
+  .cal-nav b{ font-size:21px; font-weight:600; letter-spacing:-.02em; }
+  .cal-dow{ font-size:12px; }
+  .cal-day{ border-radius:12px; font-size:15px; }
+  .cal-day.trip .d{ font-size:11px; }
+  .cal-day.selected{ color:#00151c; }
+  .detail-panel h3{ font-size:26px; }
+  .detail-row span:first-child{ font-size:13px; }
+  .detail-price{ font-weight:600; letter-spacing:-.03em; }
+  .detail-line,.line-option-top b{ font-weight:600; letter-spacing:-.02em; }
+  .line-option{ border-radius:18px; }
+  .btn{ font-size:16px; font-weight:500; padding:13px 24px; border-radius:999px; }
+  .btn-primary{ color:#00151c; }
+  .btn-primary:hover{ background:#a6e9f2; }
+  .modal{ border-radius:24px; overflow:hidden; }
+  .modal-head b{ font-weight:600; font-size:19px; }
+  .qty-row,.summary-box,.pix-box,.pay-opt,.res-card{ border-radius:18px; }
+  .field label{ font-size:13px; font-weight:500; }
+  .field input,.editable{ border-radius:12px; font-size:16px; }
+  .summary-total{ font-weight:600; }
+  .confirm-code{ font-weight:600; letter-spacing:.06em !important; }
+  .docviewer-head b{ font-weight:600; }
+  .astat b{ font-weight:600; }
+  .admin-stats,.table-scroll{ border-radius:18px; overflow:hidden; }
+  .mini-btn{ border-radius:999px; font-size:12px; }
+  .toast{ font-size:14px; }
 </style>
 </head>
 <body>
@@ -347,7 +395,6 @@
         <div class="toolbar">
           <button class="mini-btn" onclick="openNewTripForm()">+ Nova saída</button>
           <button class="mini-btn" onclick="generateWeekends()">Gerar fins de semana (12 meses)</button>
-          <button class="mini-btn" onclick="applyCurrentPrices()">Atualizar preços das saídas</button>
         </div>
       </div>
       <div id="newTripForm" style="display:none; background:var(--deep); border:1px solid var(--line-2); padding:20px; margin-bottom:20px;">
@@ -367,7 +414,7 @@
         </div>
         <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Data</label><input type="date" id="ntDate"></div>
-          <div class="field" style="margin-bottom:0;"><label>Preço (R$)</label><input type="number" id="ntPrice" value="499"></div>
+          <div class="field" style="margin-bottom:0;"><label>Preço (R$)</label><input type="number" id="ntPrice" value="649"></div>
         </div>
         <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Capacidade</label><input type="number" id="ntCap" value="10"></div>
@@ -461,10 +508,10 @@
    e bloqueio de vagas transacional. Nada aqui é simulado.
    ============================================================ */
 // Valores antigos, de quando existia uma linha só. Hoje cada linha tem os
-// próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 499 e
+// próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 649 e
 // Explorer 16 vagas / R$ 399. Mantidos apenas como referência.
 const CAPACITY_DEFAULT = 10;
-const BASE_PRICE = 499;
+const BASE_PRICE = 649;
 
 async function apiGet(url){
   try{
@@ -1584,37 +1631,14 @@ async function holdAction(code, action, hours){
   renderAdmin(); fetchTrips();
 }
 
-// Tabela de preços atual. Aplica em todas as saídas futuras de uma vez,
-// para não precisar editar data por data quando os valores mudam.
-const CURRENT_PRICES = { signature: 499, explorer: 399, alcatrazes: 599 };
-function targetPriceFor(t){
-  const line = t.line || 'signature';
-  if(String(t.destination||'').toLowerCase() === 'alcatrazes') return CURRENT_PRICES.alcatrazes;
-  return CURRENT_PRICES[line] || null;
-}
-async function applyCurrentPrices(){
-  const todayKey = fmtDate(todayStart());
-  const pending = ADMIN_TRIPS.filter(t => t.date >= todayKey && targetPriceFor(t) && Number(t.price) !== targetPriceFor(t));
-  if(!pending.length){ showToast('Todas as saídas futuras já estão com o preço atual.'); return; }
-  if(!confirm(`Atualizar ${pending.length} saída(s) futura(s) para os preços atuais?\n\nSignature: R$ ${CURRENT_PRICES.signature}\nExplorer: R$ ${CURRENT_PRICES.explorer}\nAlcatrazes: R$ ${CURRENT_PRICES.alcatrazes}`)) return;
-  let done = 0, failed = 0;
-  for(const t of pending){
-    const { ok } = await apiSend('/api/admin/trips', 'PATCH', { date: t.date, line: t.line || 'signature', price: targetPriceFor(t) });
-    if(ok) done++; else failed++;
-    showToast(`Atualizando preços... ${done + failed}/${pending.length}`);
-  }
-  showToast(failed ? `${done} atualizadas, ${failed} com erro. Tente de novo.` : `${done} saídas atualizadas.`);
-  renderAdmin(); fetchTrips();
-}
-
 function openNewTripForm(){ document.getElementById('newTripForm').style.display='block'; }
 function closeNewTripForm(){ document.getElementById('newTripForm').style.display='none'; }
 
 // Padrões de cada linha, iguais aos do servidor. Trocar a linha no
 // formulário já ajusta preço e capacidade, para não criar uma saída
-// Explorer com 10 vagas a R$ 499 por esquecimento.
+// Explorer com 10 vagas a R$ 649 por esquecimento.
 const LINE_PRESETS = {
-  signature: { price: 499, capacity: 10 },
+  signature: { price: 649, capacity: 10 },
   explorer:  { price: 399, capacity: 16 }
 };
 function applyLineDefaults(){
