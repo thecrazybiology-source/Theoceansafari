@@ -225,14 +225,16 @@ body.menu-aberto header{background:#000;backdrop-filter:none;-webkit-backdrop-fi
 body.menu-aberto .menu{background:#000}
 body.menu-aberto .fixo{display:none!important}
 .legenda-grupo{color:var(--cinza);font-size:.9rem;text-align:center;margin:16px auto 0;font-weight:500}
-.hero{padding:48px 0 100px!important}
+.hero{padding:48px 0 100px!important;background:linear-gradient(180deg,#0d1f38 0,#1a3d6c 12%,#1a3d6c 58%,#11294b 82%,#07101d 100%)!important}
 .capa{position:relative;margin:0 auto 40px;max-width:1440px}
 .capa img{display:block;width:100%;height:auto}
 .capa::before,.capa::after{content:"";position:absolute;left:0;right:0;pointer-events:none}
-.capa::before{top:0;height:28%;background:linear-gradient(#000,rgba(0,0,0,0))}
-.capa::after{bottom:0;height:22%;background:linear-gradient(rgba(0,0,0,0),#000)}
+.capa::before{top:0;height:22%;background:linear-gradient(#0d1f38,rgba(13,31,56,0))}
+.capa::after{bottom:0;height:30%;background:linear-gradient(rgba(26,61,108,0),#1a3d6c)}
 @media (min-width:1441px){.capa{-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}}
-@media (max-width:860px){.hero{padding-top:48px!important;padding-bottom:80px!important}.capa{margin-bottom:28px}.capa::before{height:14%}.capa::after{height:24%}}
+.hero p{color:#eef3f8}
+.hero .capa{margin-bottom:8px}
+@media (max-width:860px){.hero{padding-top:48px!important;padding-bottom:80px!important}.capa{margin-bottom:28px}.capa::before{height:12%}.capa::after{height:34%}}
 .titulo-linha{font-size:clamp(1rem,5.4vw,3.5rem);white-space:nowrap;max-width:none}
 .loja-home{background:var(--grafite)}
 .cams{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:22px;margin:44px auto 0;padding:0 22px 8px;max-width:1240px;scrollbar-width:none}
