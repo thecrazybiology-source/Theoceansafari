@@ -23,7 +23,7 @@ const { Pool } = require('pg');
 // do Termo de Riscos ou da Política de Cancelamento mudar, suba os dois
 // juntos — nunca altere o texto sem trocar a versão, ou o hash de aceites
 // antigos deixa de corresponder ao texto que a pessoa realmente aceitou.
-const TERMS_VERSION = '1.0';
+const TERMS_VERSION = '1.1';
 
 const LINES = ['signature', 'explorer'];
 const DEFAULT_LINE = 'signature';
@@ -32,9 +32,14 @@ const DEFAULT_LINE = 'signature';
 // saída sem informar tudo — evita cadastrar Explorer com preço e
 // capacidade de Signature por esquecimento.
 const LINE_DEFAULTS = {
-  signature: { capacity: 10, price: 649, start: '06:00', end: '12:00' },
-  explorer:  { capacity: 16, price: 399, start: '06:00', end: '12:00' }
+  signature: { capacity: 10, price: 599, start: '06:00', end: '12:00' },
+  explorer:  { capacity: 16, price: 499, start: '06:00', end: '12:00' }
 };
+
+// Alcatrazes sai no barco da Signature, mas tem preço próprio.
+// Precisa ser igual ao ALCATRAZES_PRICE do booking.html.
+const ALCATRAZES_PRICE = 749;
+function isAlcatrazes(dest) { return String(dest || '').trim().toLowerCase() === 'alcatrazes'; }
 
 // Normaliza o que vier do cliente/admin. Qualquer coisa fora da lista
 // vira null, e quem chamou decide se rejeita ou usa o padrão.
@@ -352,8 +357,9 @@ async function adminTrips(req, res) {
 
     const defaults = LINE_DEFAULTS[line];
     const cap = Number(capacity) > 0 ? Number(capacity) : defaults.capacity;
-    const priceValue = Number(price) > 0 ? Number(price) : defaults.price;
     const dest = String(destination || 'Ilhabela').trim() || 'Ilhabela';
+    const fallbackPrice = isAlcatrazes(dest) ? ALCATRAZES_PRICE : defaults.price;
+    const priceValue = Number(price) > 0 ? Number(price) : fallbackPrice;
 
     // Alcatrazes é destino exclusivo da Signature: exige condutor
     // credenciado pelo ICMBio, que é o Daniel. Barrar aqui evita que a
@@ -557,6 +563,39 @@ async function adminHoldsManualPost(req, res) {
 }
 
 // ============================================================
+// Aplica um preço novo a todas as saídas FUTURAS de uma linha + destino.
+// Saídas que já têm alguém pré-reservado ou confirmado ficam como estão:
+// quem reservou foi informado do preço antigo, e mudar por baixo dos panos
+// seria cobrar diferente do combinado. O painel lista essas datas para o
+// Daniel decidir uma a uma.
+// ============================================================
+async function adminTripsRepricePost(req, res) {
+  const body = readBody(req);
+  const line = normalizeLine(body.line);
+  if (!line) return res.status(400).json({ error: 'invalid_line' });
+  const dest = String(body.destination || 'Ilhabela').trim() || 'Ilhabela';
+  const price = Number(body.price);
+  if (!(price > 0)) return res.status(400).json({ error: 'invalid_price' });
+  const priceCents = Math.round(price * 100);
+
+  const pool = getPool();
+  const updated = await pool.query(
+    `UPDATE trips SET price_cents = $1, updated_at = now()
+     WHERE date >= CURRENT_DATE AND line = $2 AND LOWER(COALESCE(destination, 'Ilhabela')) = LOWER($3)
+       AND held = 0 AND confirmed = 0 AND price_cents <> $1`,
+    [priceCents, line, dest]
+  );
+  const kept = await pool.query(
+    `SELECT date FROM trips
+     WHERE date >= CURRENT_DATE AND line = $2 AND LOWER(COALESCE(destination, 'Ilhabela')) = LOWER($3)
+       AND (held > 0 OR confirmed > 0) AND price_cents <> $1
+     ORDER BY date ASC`,
+    [priceCents, line, dest]
+  );
+  res.status(200).json({ ok: true, updated: updated.rowCount, keptWithBookings: kept.rows.map((r) => dateStr(r.date)) });
+}
+
+// ============================================================
 // CRON — expira pré-reservas vencidas
 // ============================================================
 async function cronExpire(req, res) {
@@ -611,6 +650,7 @@ module.exports = async (req, res) => {
     if (path === '/admin/settings') return await adminSettings(req, res);
     if (path === '/admin/trips') return await adminTrips(req, res);
     if (path === '/admin/trips/bulk' && method === 'POST') return await adminTripsBulkPost(req, res);
+    if (path === '/admin/trips/reprice' && method === 'POST') return await adminTripsRepricePost(req, res);
     if (path === '/admin/holds' && method === 'GET') return await adminHoldsGet(req, res);
     if (path === '/admin/holds/action' && method === 'POST') return await adminHoldsActionPost(req, res);
     if (path === '/admin/holds/manual' && method === 'POST') return await adminHoldsManualPost(req, res);
