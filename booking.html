@@ -56,13 +56,13 @@
   .dot{ width:8px; height:8px; border-radius:50%; }
   .dot.ok{ background:var(--green); } .dot.low{ background:var(--amber); } .dot.full{ background:var(--red); opacity:.6;} .dot.blocked{ background:var(--shallow-dim); }
 
-  .cal-shell{ display:grid; grid-template-columns:1.15fr 0.85fr; gap:1px; background:var(--line); border:1px solid var(--line); }
+  .cal-shell{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,0.85fr); gap:1px; background:var(--line); border:1px solid var(--line); }
   .cal-panel{ background:var(--abyss); padding:32px; }
   .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
   .cal-nav b{ font-family:var(--serif); font-size:20px; font-weight:400; text-transform:capitalize; }
   .cal-nav button{ background:none; border:1px solid var(--line-2); color:var(--foam); width:32px; height:32px; border-radius:50%; font-size:14px; }
   .cal-nav button:hover{ border-color:var(--amber); color:var(--amber); }
-  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
   .cal-dow{ font-family:var(--mono); font-size:10px; text-align:center; color:var(--shallow-dim); padding-bottom:8px; text-transform:uppercase; }
   .cal-day{ aspect-ratio:1; border-radius:6px; position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:13px; color:var(--shallow); border:1px solid transparent; }
   .cal-day.empty{ visibility:hidden; }
@@ -74,7 +74,7 @@
   .cal-day.past{ opacity:.25; pointer-events:none; }
 
   @media (max-width:760px){
-    .cal-shell{ grid-template-columns:1fr; }
+    .cal-shell{ grid-template-columns:minmax(0,1fr); }
     .cal-panel, .detail-panel{ padding:22px 16px; }
     .cal-nav b{ font-size:17px; }
     .cal-grid{ gap:5px; }
@@ -85,6 +85,7 @@
   }
 
   .detail-panel{ background:var(--deep); padding:32px; display:flex; flex-direction:column; }
+  @media (max-width:760px){ .detail-panel{ padding:22px 16px; } }
   .detail-empty{ margin:auto; text-align:center; color:var(--shallow-dim); font-family:var(--mono); font-size:12px; padding:40px 10px; }
   .detail-status{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:5px 10px; border-radius:20px; display:inline-block; width:fit-content; margin-bottom:16px; }
   .detail-status.ok{ background:rgba(127,184,133,.14); color:var(--green); }
@@ -314,9 +315,10 @@
 <div class="view active" id="view-booking">
   <div class="wrap">
     <div class="booking-head">
-      <div class="eyebrow">The Ocean Safari</div>
+      <div class="eyebrow" id="bookingEyebrow">The Ocean Safari</div>
       <h1>Escolha sua data</h1>
-      <p>Selecione um dia no calendário para ver horário, vagas restantes e reservar. Alguns dias têm mais de uma expedição saindo.</p>
+      <p id="bookingIntro">Selecione um dia no calendário para ver horário, vagas restantes e reservar. Alguns dias têm mais de uma expedição saindo.</p>
+      <p id="bookingSwitch" style="margin-top:10px; font-size:13px;"><a href="booking.html?destino=alcatrazes">Procurando Alcatrazes? Ver as datas</a></p>
     </div>
 
     <div class="legend">
@@ -395,6 +397,7 @@
         <div class="toolbar">
           <button class="mini-btn" onclick="openNewTripForm()">+ Nova saída</button>
           <button class="mini-btn" onclick="generateWeekends()">Gerar fins de semana (12 meses)</button>
+          <button class="mini-btn" onclick="repriceFutureTrips()">Aplicar preços atuais às saídas futuras</button>
         </div>
       </div>
       <div id="newTripForm" style="display:none; background:var(--deep); border:1px solid var(--line-2); padding:20px; margin-bottom:20px;">
@@ -406,7 +409,7 @@
             </select>
           </div>
           <div class="field" style="margin-bottom:0;"><label>Destino</label>
-            <select id="ntDest">
+            <select id="ntDest" onchange="applyLineDefaults()">
               <option value="Ilhabela">Ilhabela</option>
               <option value="Alcatrazes">Alcatrazes</option>
             </select>
@@ -414,7 +417,7 @@
         </div>
         <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Data</label><input type="date" id="ntDate"></div>
-          <div class="field" style="margin-bottom:0;"><label>Preço (R$)</label><input type="number" id="ntPrice" value="649"></div>
+          <div class="field" style="margin-bottom:0;"><label>Preço (R$)</label><input type="number" id="ntPrice" value="599"></div>
         </div>
         <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Capacidade</label><input type="number" id="ntCap" value="10"></div>
@@ -508,10 +511,34 @@
    e bloqueio de vagas transacional. Nada aqui é simulado.
    ============================================================ */
 // Valores antigos, de quando existia uma linha só. Hoje cada linha tem os
-// próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 649 e
-// Explorer 16 vagas / R$ 399. Mantidos apenas como referência.
+// próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 599,
+// Explorer 16 vagas / R$ 499 e Alcatrazes R$ 749. Mantidos só como referência.
 const CAPACITY_DEFAULT = 10;
-const BASE_PRICE = 649;
+const BASE_PRICE = 599;
+
+/* ------------------------------------------------------------
+   DESTINO DO CALENDÁRIO
+   booking.html                      → saídas de Ilhabela (Signature e Explorer)
+   booking.html?destino=alcatrazes   → só as saídas para Alcatrazes
+   Alcatrazes tem preço, roteiro e público próprios, então não se mistura
+   com o calendário de Ilhabela. Termos, assinatura e pré-reserva são os
+   mesmos nos dois.
+   ------------------------------------------------------------ */
+const DEST_MODE = (new URLSearchParams(location.search).get('destino') || '').toLowerCase() === 'alcatrazes'
+  ? 'alcatrazes' : 'ilhabela';
+function isAlcatrazesTrip(t){ return String((t && t.destination) || '').toLowerCase() === 'alcatrazes'; }
+// Nome que o cliente vê. Uma saída Signature para Alcatrazes aparece
+// como "Alcatrazes", não como "Signature".
+function tripLabel(t){
+  if(!t) return '';
+  return isAlcatrazesTrip(t) ? 'Alcatrazes' : (LINE_LABELS[t.line] || t.line);
+}
+if(DEST_MODE === 'alcatrazes'){
+  document.title = 'Reservar Alcatrazes · The Ocean Safari';
+  document.getElementById('bookingEyebrow').textContent = 'The Ocean Safari Alcatrazes';
+  document.getElementById('bookingIntro').textContent = 'Poucas saídas por temporada, sempre no barco Signature, conforme autorização do ICMBio. Escolha um dia para ver horário, vagas e reservar.';
+  document.getElementById('bookingSwitch').innerHTML = '<a href="booking.html">Procurando o Safari em Ilhabela? Ver as datas</a>';
+}
 
 async function apiGet(url){
   try{
@@ -551,14 +578,17 @@ function escapeHtml(str){
    Alterar o texto abaixo SEMPRE exige subir TERMS_VERSION,
    para nunca modificar retroativamente o que um cliente já aceitou.
    ============================================================ */
-const TERMS_VERSION = '1.0';
-const TERMS_EFFECTIVE = '01/09/2026';
+const TERMS_VERSION = '1.1';
+const TERMS_EFFECTIVE = '06/11/2026';
+// v1.1: inclui o Arquipélago de Alcatrazes (objeto, riscos, deveres e
+// força maior). Os textos da v1.0 continuam abaixo, sem alteração, porque
+// é o que os clientes anteriores assinaram e o comprovante deles mostra.
 
 // Número real da equipe (WhatsApp), formato internacional sem símbolos.
 const WHATSAPP_NUMBER = '5511937491509';
 
-const RISK_TERM_HTML = `
-  <span class="version-tag">Termo de Ciência e Assunção de Riscos · v${TERMS_VERSION} · vigente desde ${TERMS_EFFECTIVE}</span>
+const RISK_TERM_HTML_V1_0 = `
+  <span class="version-tag">Termo de Ciência e Assunção de Riscos · v1.0 · vigente desde 01/09/2026</span>
   <h4>1. Objeto</h4>
   <p>Este Termo regula a participação do PARTICIPANTE na experiência "The Ocean Safari", expedição de observação e mergulho livre (snorkeling) com vida marinha selvagem, em Ilhabela/São Sebastião-SP, sob responsabilidade de Daniel Munhoz, biólogo e instrutor de mergulho.</p>
   <h4>2. Não há garantia de avistamento</h4>
@@ -599,8 +629,8 @@ const RISK_TERM_HTML = `
   <p>Ao aceitar eletronicamente este Termo, o participante declara que leu e compreendeu seu conteúdo, que as informações prestadas são verdadeiras, e que participa por livre e espontânea vontade, ciente dos riscos aqui descritos.</p>
 `;
 
-const CANCEL_POLICY_HTML = `
-  <span class="version-tag">Política de Cancelamento, Remarcação e Reembolso · v${TERMS_VERSION} · vigente desde ${TERMS_EFFECTIVE}</span>
+const CANCEL_POLICY_HTML_V1_0 = `
+  <span class="version-tag">Política de Cancelamento, Remarcação e Reembolso · v1.0 · vigente desde 01/09/2026</span>
   <h4>1. Direito de arrependimento (compra pela internet)</h4>
   <p>Como a reserva é feita pela internet, você tem direito a desistir em até 7 dias corridos após a confirmação (art. 49 do Código de Defesa do Consumidor), sem justificativa, com devolução integral do valor pago. Se a data da saída estiver marcada para dentro desse prazo, entre em contato com a equipe antes de confirmar.</p>
   <h4>2. Cancelamento pelo cliente</h4>
@@ -615,10 +645,78 @@ const CANCEL_POLICY_HTML = `
   <p>É permitida a substituição por outra pessoa até 24h antes da saída, sem custo, desde que o novo participante aceite individualmente o Termo de Ciência e Assunção de Riscos.</p>
 `;
 
-function openDocViewer(which){
+
+const RISK_TERM_HTML = `
+  <span class="version-tag">Termo de Ciência e Assunção de Riscos · v${TERMS_VERSION} · vigente desde ${TERMS_EFFECTIVE}</span>
+  <h4>1. Objeto</h4>
+  <p>Este Termo regula a participação do PARTICIPANTE na experiência "The Ocean Safari", expedição de observação e mergulho livre (snorkeling) com vida marinha selvagem, em Ilhabela/São Sebastião-SP e, nas saídas com esse destino, no Arquipélago de Alcatrazes, unidade de conservação federal administrada pelo ICMBio, sob responsabilidade de Daniel Munhoz, biólogo e instrutor de mergulho.</p>
+  <h4>2. Não há garantia de avistamento</h4>
+  <p>Os animais eventualmente encontrados são completamente selvagens e livres. As espécies apresentadas no site representam possibilidades de encontro, nunca promessa ou garantia. O comportamento da fauna e as condições do oceano são imprevisíveis.</p>
+  <h4>3. Riscos inerentes à atividade</h4>
+  <ul>
+    <li>Navegação marítima, movimento da embarcação, ondas, correntes e balanço prolongado;</li>
+    <li>Condições meteorológicas variáveis: vento, chuva, sol intenso, calor ou frio;</li>
+    <li>Enjoo e mal-estar decorrente do movimento do mar;</li>
+    <li>Quedas, escorregões ou impactos leves a bordo, inclusive no embarque e desembarque;</li>
+    <li>Exposição solar prolongada, desidratação ou insolação sem os devidos cuidados;</li>
+    <li>Mergulho livre: esforço físico, frio na água e, em casos raros, afogamento;</li>
+    <li>Proximidade e interação com animais marinhos selvagens, de comportamento imprevisível;</li>
+    <li>Demora no atendimento médico devido à distância em trechos de navegação em alto mar;</li>
+    <li>Nas saídas para Alcatrazes: travessia mais longa em mar aberto, com maior distância da costa e, por consequência, de atendimento médico.</li>
+  </ul>
+  <p>Nenhum desses riscos decorre de negligência da empresa: são características naturais da atividade, que a operação busca mitigar com equipamentos adequados e condução profissional.</p>
+  <h4>4. Restrições de participação</h4>
+  <ul>
+    <li>Idade mínima de 12 anos completos;</li>
+    <li>Não recomendado para gestantes;</li>
+    <li>Participantes com problemas na coluna, problemas cardíacos ou respiratórios, ou com mobilidade reduzida devem avisar a equipe antes da reserva.</li>
+  </ul>
+  <h4>5. Deveres do participante</h4>
+  <ul>
+    <li>Seguir as instruções da equipe e do comandante, inclusive em situações de segurança;</li>
+    <li>Utilizar colete salva-vidas e equipamentos de segurança quando solicitado;</li>
+    <li>Respeitar as regras ambientais: não tocar, perseguir, alimentar ou perturbar animais;</li>
+    <li>Informar previamente qualquer condição relevante para sua segurança;</li>
+    <li>Não adotar comportamento que coloque em risco sua segurança, a de terceiros ou dos animais;</li>
+    <li>Nas saídas para Alcatrazes: cumprir as regras da unidade de conservação definidas pelo ICMBio, inclusive sobre áreas e atividades permitidas, e as orientações do condutor credenciado.</li>
+  </ul>
+  <h4>6. O que este Termo não afasta</h4>
+  <p>Este Termo <b style="color:var(--foam);">não</b> exclui a responsabilidade do The Ocean Safari por falha em fornecer equipamentos de segurança, conduta negligente da tripulação, descumprimento de normas de navegação ou qualquer vício na prestação do serviço, nos termos do Código de Defesa do Consumidor.</p>
+  <h4>7. Autoridade do comandante</h4>
+  <p>A decisão final sobre rota, alteração de trajeto, interrupção ou retorno antecipado por motivo de segurança cabe exclusivamente ao comandante responsável.</p>
+  <h4>8. Uso de imagens</h4>
+  <p>Salvo manifestação em contrário por escrito, o participante autoriza o uso de imagens capturadas durante a experiência para divulgação do The Ocean Safari.</p>
+  <h4>9. Declaração</h4>
+  <p>Ao aceitar eletronicamente este Termo, o participante declara que leu e compreendeu seu conteúdo, que as informações prestadas são verdadeiras, e que participa por livre e espontânea vontade, ciente dos riscos aqui descritos.</p>
+`;
+
+const CANCEL_POLICY_HTML = `
+  <span class="version-tag">Política de Cancelamento, Remarcação e Reembolso · v${TERMS_VERSION} · vigente desde ${TERMS_EFFECTIVE}</span>
+  <h4>1. Direito de arrependimento (compra pela internet)</h4>
+  <p>Como a reserva é feita pela internet, você tem direito a desistir em até 7 dias corridos após a confirmação (art. 49 do Código de Defesa do Consumidor), sem justificativa, com devolução integral do valor pago. Se a data da saída estiver marcada para dentro desse prazo, entre em contato com a equipe antes de confirmar.</p>
+  <h4>2. Cancelamento pelo cliente</h4>
+  <p>Fora do prazo de arrependimento, você pode cancelar a qualquer momento antes da saída, falando diretamente com a equipe pelo WhatsApp. Quanto maior a antecedência, maior o percentual reembolsado — a equipe informa o valor exato no momento do cancelamento, considerando a proximidade da data da saída.</p>
+  <h4>3. Cancelamento pelo The Ocean Safari por mau tempo ou condição insegura</h4>
+  <p>Quando, com base em previsão oficial e/ou orientação da Capitania dos Portos, a operação concluir que as condições não permitem navegar com segurança, você escolhe entre <b style="color:var(--foam);">reembolso integral</b> ou <b style="color:var(--foam);">remarcação gratuita</b>. Chuva leve ou mar com ondulação dentro dos parâmetros normais de segurança não cancelam o passeio.</p>
+  <h4>4. Força maior</h4>
+  <p>Em casos de força maior alheios à empresa (falha mecânica de terceiros, determinação de autoridade marítima ou ambiental, como a suspensão ou o cancelamento de uma autorização de visita a Alcatrazes pelo ICMBio), buscaremos prioritariamente a remarcação e, não sendo possível, o reembolso proporcional.</p>
+  <h4>5. Não comparecimento e atrasos</h4>
+  <p>O não comparecimento sem aviso prévio é tratado como no-show, sem reembolso ou remarcação. Atrasos acima de 15 minutos podem resultar na perda da vaga.</p>
+  <h4>6. Substituição de participante</h4>
+  <p>É permitida a substituição por outra pessoa até 24h antes da saída, sem custo, desde que o novo participante aceite individualmente o Termo de Ciência e Assunção de Riscos.</p>
+`;
+
+// Texto de cada versão já publicada. O comprovante de uma reserva abre a
+// versão que aquela pessoa aceitou, não a atual.
+const TERMS_BY_VERSION = {
+  '1.0': { risk: RISK_TERM_HTML_V1_0, cancel: CANCEL_POLICY_HTML_V1_0 },
+  [TERMS_VERSION]: { risk: RISK_TERM_HTML, cancel: CANCEL_POLICY_HTML }
+};
+function openDocViewer(which, version){
+  const texts = TERMS_BY_VERSION[version] || TERMS_BY_VERSION[TERMS_VERSION];
   const title = which==='risk' ? 'Termo de Ciência e Assunção de Riscos' : 'Política de Cancelamento, Remarcação e Reembolso';
   document.getElementById('docViewerTitle').textContent = title;
-  document.getElementById('docViewerBody').innerHTML = which==='risk' ? RISK_TERM_HTML : CANCEL_POLICY_HTML;
+  document.getElementById('docViewerBody').innerHTML = which==='risk' ? texts.risk : texts.cancel;
   document.getElementById('docViewerBg').classList.add('open');
 }
 function closeDocViewer(){
@@ -638,6 +736,8 @@ function viewAcceptanceProof(code){
   const ipLabel = h.acceptIp ? escapeHtml(h.acceptIp) : '—';
   const uaLabel = h.acceptUserAgent ? escapeHtml(h.acceptUserAgent) : '—';
 
+  // Só entra no onclick se for uma versão conhecida (o valor vem do banco).
+  const proofVersion = TERMS_BY_VERSION[h.termsVersion] ? h.termsVersion : TERMS_VERSION;
   const versionLabel = h.termsVersion === 'MANUAL' ? 'Reserva lançada manualmente pelo admin' : `v${escapeHtml(h.termsVersion || '—')}`;
   document.getElementById('docViewerTitle').textContent = `Comprovante de aceite · ${escapeHtml(h.code)}`;
   document.getElementById('docViewerBody').innerHTML = `
@@ -655,8 +755,8 @@ function viewAcceptanceProof(code){
     <p style="font-family:var(--mono); font-size:11px; word-break:break-all; color:var(--shallow);">${hashLabel}</p>
     <p style="font-size:12px; color:var(--shallow-dim);">Esse código é gerado no momento do aceite, a partir da versão do termo, do CPF, do nome digitado como assinatura e do instante exato — e não pode ser reproduzido sem esses mesmos dados. Ele serve como evidência de que esta pessoa, com este CPF, assinou eletronicamente nesta data e hora.</p>
     <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
-      <button type="button" class="btn btn-ghost" style="font-size:12px;" onclick="openDocViewer('risk')">Ver texto do Termo de Riscos</button>
-      <button type="button" class="btn btn-ghost" style="font-size:12px;" onclick="openDocViewer('cancel')">Ver Política de Cancelamento</button>
+      <button type="button" class="btn btn-ghost" style="font-size:12px;" onclick="openDocViewer('risk', '${proofVersion}')">Ver texto do Termo de Riscos</button>
+      <button type="button" class="btn btn-ghost" style="font-size:12px;" onclick="openDocViewer('cancel', '${proofVersion}')">Ver Política de Cancelamento</button>
     </div>
   `;
   document.getElementById('docViewerBg').classList.add('open');
@@ -678,6 +778,9 @@ function simulateParticipantAccept(i){
 }
 
 function fmtDate(d){ return d.toISOString().slice(0,10); }
+// "sábado, 14 de novembro" → "Sábado, 14 de novembro". Em português só a
+// primeira letra vai maiúscula (text-transform:capitalize deixaria "De").
+function capFirst(str){ str = String(str||''); return str.charAt(0).toUpperCase() + str.slice(1); }
 function todayStart(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
 
 // Uma data pode ter mais de uma saída: Signature e Explorer rodam em
@@ -716,7 +819,9 @@ async function fetchTrips(){
   }
   TRIPS = {};
   TRIPS_BY_DATE = {};
-  (data.trips||[]).forEach(t=>{
+  (data.trips||[]).filter(t=>{
+    return DEST_MODE === 'alcatrazes' ? isAlcatrazesTrip(t) : !isAlcatrazesTrip(t);
+  }).forEach(t=>{
     // Saídas antigas, criadas antes das linhas existirem, são Signature.
     const line = t.line || 'signature';
     const key = tripKey(t.date, line);
@@ -734,8 +839,24 @@ async function fetchTrips(){
   Object.values(TRIPS_BY_DATE).forEach(list=>{
     list.sort((a,b)=> LINE_ORDER.indexOf(a.line) - LINE_ORDER.indexOf(b.line));
   });
+  // Na primeira carga, se o mês atual não tem saída aberta, pula para o
+  // primeiro mês que tem. Alcatrazes tem poucas datas, no verão: sem isso
+  // a pessoa abre o calendário vazio e acha que não existe data nenhuma.
+  if(!calJumped){
+    calJumped = true;
+    const keys = Object.keys(TRIPS_BY_DATE).filter(k=>bookableTrips(k).length).sort();
+    const monthPrefix = fmtDate(calCursor).slice(0,7);
+    if(keys.length && !keys.some(k=>k.startsWith(monthPrefix))){
+      const first = new Date(keys[0]+'T00:00:00');
+      calCursor = new Date(first.getFullYear(), first.getMonth(), 1);
+    }
+  }
   renderCalendar();
   if(selectedDateKey) renderDetail(selectedDateKey);
+  else if(DEST_MODE === 'alcatrazes' && !Object.keys(TRIPS).length){
+    document.getElementById('detailPanel').innerHTML = `<div class="detail-empty">Ainda não há datas abertas para Alcatrazes.<br><br>
+      <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Quero saber das próximas datas do The Ocean Safari Alcatrazes.')}" target="_blank" rel="noopener">Pergunte pelas próximas no WhatsApp</a></div>`;
+  }
 }
 
 // Saídas de um dia que a pessoa ainda pode reservar (bloqueadas não contam).
@@ -775,6 +896,7 @@ function showToast(msg){
    CALENDAR
    ============================================================ */
 let calCursor = new Date(); calCursor.setDate(1);
+let calJumped = false;
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DOWS = ['D','S','T','Q','Q','S','S'];
 
@@ -850,7 +972,7 @@ function renderDetail(key){
   // Dia com as duas linhas e nenhuma escolhida ainda: mostra as opções.
   if(open.length > 1 && !selectedTripKey){
     panel.innerHTML = `
-      <h3 style="text-transform:capitalize;">${dateLabel}</h3>
+      <h3>${capFirst(dateLabel)}</h3>
       <p style="color:var(--shallow); font-size:13px; margin:10px 0 18px;">Duas expedições saem nesta data. Escolha a sua.</p>
       <div class="line-options">
         ${open.map(t=>{
@@ -859,7 +981,7 @@ function renderDetail(key){
           const stLabel = st==='ok'?'Disponível':st==='low'?'Últimas vagas':'Esgotado';
           return `<button class="line-option" data-trip="${t.key}" ${st==='full'?'disabled':''}>
             <div class="line-option-top">
-              <b>The Ocean Safari <em>${LINE_LABELS[t.line]||t.line}</em></b>
+              <b>The Ocean Safari <em>${tripLabel(t)}</em></b>
               <span class="detail-status ${st}">${stLabel}</span>
             </div>
             <div class="line-option-meta">R$ ${t.price} / participante · ${t.destination} · ${st==='full'?'sem vagas':remaining+' vagas'}</div>
@@ -881,8 +1003,8 @@ function renderDetail(key){
   const canSwitch = open.length > 1;
   panel.innerHTML = `
     <span class="detail-status ${st}">${stLabel}</span>
-    <h3 style="text-transform:capitalize;">${dateLabel}</h3>
-    <div class="detail-line">The Ocean Safari <em>${LINE_LABELS[trip.line]||trip.line}</em></div>
+    <h3>${capFirst(dateLabel)}</h3>
+    <div class="detail-line">The Ocean Safari <em>${tripLabel(trip)}</em></div>
     <div class="detail-price">R$ ${trip.price}<small> / participante</small></div>
     <div class="detail-rows">
       <div class="detail-row"><span>Horário</span><span>${trip.start} às ${trip.end} (6h)</span></div>
@@ -1242,13 +1364,16 @@ function renderStep(step){
     const code = checkoutState.lastCode;
     const expiresAt = new Date(checkoutState.lastExpiresAt);
     const dateLabel = new Date(checkoutState.date+'T00:00:00').toLocaleDateString('pt-BR');
-    const expiresLabel = expiresAt.toLocaleString('pt-BR');
+    // O prazo é configurável no painel; o texto usa o horário real que o
+    // servidor devolveu, nunca um número fixo.
+    const expiresLabel = expiresAt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+expiresAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    const tripName = 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
     const waNumber = WHATSAPP_NUMBER;
     const gearLine = gearTotal() > 0
       ? `Aluguel: ${checkoutState.gear.wetsuits ? checkoutState.gear.wetsuits+' roupa(s) 2mm' : ''}${checkoutState.gear.wetsuits && checkoutState.gear.fins ? ' + ' : ''}${checkoutState.gear.fins ? checkoutState.gear.fins+' nadadeira(s)' : ''} (R$ ${gearTotal()})\n`
       : '';
     const waText = encodeURIComponent(
-      `Olá! Acabei de fazer uma pré-reserva para o The Ocean Safari ${LINE_LABELS[checkoutState.line]||''}.\n\n`+
+      `Olá! Acabei de fazer uma pré-reserva para o The Ocean Safari ${tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || ''}.\n\n`+
       `Código: ${code}\nData: ${dateLabel}\nParticipantes: ${checkoutState.qty}\n`+gearLine+`\n`+
       `Gostaria de finalizar minha reserva.`
     );
@@ -1259,18 +1384,19 @@ function renderStep(step){
       <div class="confirm-check">✓</div>
       <p style="text-align:center; color:var(--shallow);">
         Separamos temporariamente <b style="color:var(--foam);">${checkoutState.qty} vaga(s)</b> em
-        <b style="color:var(--foam);">${dateLabel}</b> por 2 horas.
+        <b style="color:var(--foam);">${dateLabel}</b>. A pré-reserva fica guardada até <b style="color:var(--foam);">${expiresLabel}</b>.
       </p>
       <div class="demo-note" style="color:var(--red); text-align:center; font-weight:600;">
         Sua reserva ainda NÃO está confirmada.
       </div>
       <div class="confirm-code">${code}</div>
       <div class="summary-box">
+        <div class="summary-line"><span>Expedição</span><b>${tripName}</b></div>
         <div class="summary-line"><span>Data</span><b>${dateLabel}</b></div>
         <div class="summary-line"><span>Participantes</span><b>${checkoutState.qty}</b></div>
         <div class="summary-line"><span>Prazo da pré-reserva</span><b>${expiresLabel}</b></div>
       </div>
-      <a class="btn btn-primary btn-block" href="${waLink}" target="_blank" rel="noopener" style="text-align:center; text-decoration:none; display:block;">CONTINUAR PELO WHATSAPP</a>
+      <a class="btn btn-primary btn-block" href="${waLink}" target="_blank" rel="noopener" style="text-align:center; text-decoration:none; display:block;">Continuar pelo WhatsApp</a>
       <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closeModal()">Fechar</button>
       <div class="demo-note">Fale com nossa equipe pelo WhatsApp para finalizar sua reserva e receber as informações de pagamento. Se o prazo acima expirar sem contato, as vagas voltam automaticamente para o calendário.</div>
     `;
@@ -1384,15 +1510,15 @@ function renderResCard(h){
       <div class="rhead">
         <div>
           <div class="eyebrow">Pré-reserva ${h.code}</div>
-          <h3 style="margin-top:10px; text-transform:capitalize;">${dateLabel}</h3>
+          <h3 style="margin-top:10px;">${capFirst(dateLabel)}</h3>
         </div>
         <span class="detail-status ${STATUS_CLASS[h.status]||''}">${STATUS_LABELS[h.status]||h.status}</span>
       </div>
       <div class="detail-rows">
         <div class="detail-row"><span>Participantes</span><span>${h.qty}</span></div>
-        <div class="detail-row"><span>Prazo da pré-reserva</span><span>${expiresLabel}</span></div>
+        ${showWa ? `<div class="detail-row"><span>Prazo da pré-reserva</span><span>${expiresLabel}</span></div>` : ''}
       </div>
-      ${showWa ? `<a class="btn btn-primary btn-block" style="margin-top:14px; text-align:center; text-decoration:none; display:block;" target="_blank" rel="noopener" href="https://wa.me/${WHATSAPP_NUMBER}?text=${waText}">CONTINUAR PELO WHATSAPP</a>` : ''}
+      ${showWa ? `<a class="btn btn-primary btn-block" style="margin-top:14px; text-align:center; text-decoration:none; display:block;" target="_blank" rel="noopener" href="https://wa.me/${WHATSAPP_NUMBER}?text=${waText}">Continuar pelo WhatsApp</a>` : ''}
       <div class="policy-note" style="margin-top:14px;">O pagamento e a confirmação definitiva são feitos diretamente com a equipe pelo WhatsApp. Este status é apenas informativo.</div>
     </div>`;
 }
@@ -1636,22 +1762,50 @@ function closeNewTripForm(){ document.getElementById('newTripForm').style.displa
 
 // Padrões de cada linha, iguais aos do servidor. Trocar a linha no
 // formulário já ajusta preço e capacidade, para não criar uma saída
-// Explorer com 10 vagas a R$ 649 por esquecimento.
+// Explorer com 10 vagas a R$ 599 por esquecimento. Precisam ser iguais
+// aos LINE_DEFAULTS e ALCATRAZES_PRICE do servidor (api/router.js).
 const LINE_PRESETS = {
-  signature: { price: 649, capacity: 10 },
-  explorer:  { price: 399, capacity: 16 }
+  signature: { price: 599, capacity: 10 },
+  explorer:  { price: 499, capacity: 16 }
 };
+const ALCATRAZES_PRICE = 749;
 function applyLineDefaults(){
   const line = document.getElementById('ntLine').value;
   const preset = LINE_PRESETS[line] || LINE_PRESETS.signature;
-  document.getElementById('ntPrice').value = preset.price;
-  document.getElementById('ntCap').value = preset.capacity;
   // Alcatrazes exige condutor credenciado pelo ICMBio: só Signature.
   const dest = document.getElementById('ntDest');
   const alca = dest.querySelector('option[value="Alcatrazes"]');
   if(alca){
     alca.disabled = line !== 'signature';
     if(alca.disabled && dest.value === 'Alcatrazes') dest.value = 'Ilhabela';
+  }
+  document.getElementById('ntPrice').value = dest.value === 'Alcatrazes' ? ALCATRAZES_PRICE : preset.price;
+  document.getElementById('ntCap').value = preset.capacity;
+}
+
+// Aplica os preços atuais a todas as saídas futuras já cadastradas.
+// O servidor não mexe em datas que já têm reserva: essas aparecem na
+// mensagem, para decidir uma a uma na tabela.
+async function repriceFutureTrips(){
+  const plan = [
+    { line:'signature', destination:'Ilhabela',   price:LINE_PRESETS.signature.price, label:'Signature' },
+    { line:'explorer',  destination:'Ilhabela',   price:LINE_PRESETS.explorer.price,  label:'Explorer' },
+    { line:'signature', destination:'Alcatrazes', price:ALCATRAZES_PRICE,             label:'Alcatrazes' }
+  ];
+  const resumo = plan.map(p=>`${p.label}: R$ ${p.price}`).join('\n');
+  if(!confirm(`Aplicar estes preços a todas as saídas futuras?\n\n${resumo}\n\nDatas que já têm alguém reservado continuam com o preço antigo.`)) return;
+  let total = 0; const kept = []; let failed = false;
+  for(const p of plan){
+    const { ok, data } = await apiSend('/api/admin/trips/reprice', 'POST', { line:p.line, destination:p.destination, price:p.price });
+    if(!ok){ failed = true; continue; }
+    total += data.updated || 0;
+    (data.keptWithBookings||[]).forEach(d=> kept.push(`${new Date(d+'T00:00:00').toLocaleDateString('pt-BR')} (${p.label})`));
+  }
+  renderAdmin(); fetchTrips();
+  if(failed){ showToast('Parte dos preços não foi atualizada. Tente de novo.'); return; }
+  showToast(`${total} saída(s) com preço atualizado.`);
+  if(kept.length){
+    alert(`Estas datas já têm reserva e ficaram com o preço antigo. Se quiser, mude o preço delas direto na tabela:\n\n${kept.join('\n')}`);
   }
 }
 
