@@ -397,7 +397,7 @@
         <div class="toolbar">
           <button class="mini-btn" onclick="openNewTripForm()">+ Nova saída</button>
           <button class="mini-btn" onclick="generateWeekends()">Gerar fins de semana (12 meses)</button>
-          <button class="mini-btn" onclick="repriceFutureTrips()">Aplicar preços atuais às saídas futuras</button>
+          <button class="mini-btn" onclick="repriceFutureTrips()">Aplicar preços e horários atuais às saídas futuras</button>
         </div>
       </div>
       <div id="newTripForm" style="display:none; background:var(--deep); border:1px solid var(--line-2); padding:20px; margin-bottom:20px;">
@@ -512,7 +512,7 @@
    ============================================================ */
 // Valores antigos, de quando existia uma linha só. Hoje cada linha tem os
 // próprios padrões (ver LINE_PRESETS): Signature 10 vagas / R$ 599,
-// Explorer 16 vagas / R$ 499 e Alcatrazes R$ 749. Mantidos só como referência.
+// Explorer 16 vagas / R$ 499 e Alcatrazes R$ 730. Mantidos só como referência.
 const CAPACITY_DEFAULT = 10;
 const BASE_PRICE = 599;
 
@@ -1036,7 +1036,7 @@ function openCheckout(key){
     riskAccepted:false, cancelAccepted:false,
     healthAnswer:null, healthNote:'', healthConsent:false,
     signatureName:'',
-    gear:{ wetsuits:0, fins:0 },
+    gear:{ wanted:null, kits:0 },
     otherParticipants:[]
   };
   document.getElementById('modalBg').classList.add('open');
@@ -1049,7 +1049,23 @@ function closeModal(){ document.getElementById('modalBg').classList.remove('open
    (aluguel de equipamento de mergulho), então a barra de progresso
    não pode ter um número fixo de passos.
    ------------------------------------------------------------ */
-const GEAR_ITEM_PRICE = 60; // por peça (roupa 2mm ou nadadeira)
+// Equipamento de mergulho livre: um kit por pessoa (máscara, snorkel,
+// roupa de neoprene 2mm e nadadeira), por R$ 100. Precisa ser igual ao
+// GEAR_KIT_PRICE do servidor (api/router.js).
+const GEAR_KIT_PRICE = 100;
+function kitText(n){
+  return n ? `${n} kit${n>1?'s':''} completo${n>1?'s':''} (máscara, snorkel, roupa 2mm e nadadeira)` : '';
+}
+// Resumo a partir do que o servidor guardou. Reservas de antes do kit
+// tinham só roupa e nadadeira, por isso o fallback.
+function gearSummary(g, short){
+  g = g || {};
+  if(g.masks) return short ? `${g.masks}× kit completo` : kitText(g.masks);
+  const parts = [];
+  if(g.wetsuits) parts.push(`${g.wetsuits}× roupa 2mm`);
+  if(g.fins) parts.push(`${g.fins}× nadadeira`);
+  return parts.join(' · ');
+}
 
 function tripHasGear(trip){
   return !!trip && String(trip.destination||'').toLowerCase() === 'alcatrazes';
@@ -1059,8 +1075,7 @@ function tripHasGear(trip){
 // aluguel para gente que não vai mais embarcar.
 function clampGear(){
   if(!checkoutState.gear) return;
-  checkoutState.gear.wetsuits = Math.min(checkoutState.gear.wetsuits, checkoutState.qty);
-  checkoutState.gear.fins = Math.min(checkoutState.gear.fins, checkoutState.qty);
+  checkoutState.gear.kits = Math.min(checkoutState.gear.kits || 0, checkoutState.qty);
 }
 
 function checkoutSteps(){
@@ -1090,20 +1105,16 @@ function prevStep(current){
 // Total do aluguel escolhido. O servidor recalcula esse valor por conta
 // própria; aqui é só para a pessoa ver o que está somando.
 function gearTotal(){
-  const g = checkoutState.gear || { wetsuits:0, fins:0 };
-  return (g.wetsuits + g.fins) * GEAR_ITEM_PRICE;
+  const kits = (checkoutState.gear && checkoutState.gear.kits) || 0;
+  return kits * GEAR_KIT_PRICE;
 }
 
 // Mostra, no painel admin, quantas peças de equipamento a reserva alugou.
 // É o que a operadora de mergulho precisa separar antes do embarque.
 function gearBadge(h){
-  const g = h.gear || {};
-  const ws = g.wetsuits||0, fn = g.fins||0;
-  if(!ws && !fn) return '';
-  const parts = [];
-  if(ws) parts.push(`${ws}× roupa 2mm`);
-  if(fn) parts.push(`${fn}× nadadeira`);
-  return `<br><span style="color:var(--amber); font-size:11px;">${parts.join(' · ')}</span>`;
+  const txt = gearSummary(h.gear || {}, true);
+  if(!txt) return '';
+  return `<br><span style="color:var(--amber); font-size:11px;">${txt}</span>`;
 }
 
 function renderStep(step){
@@ -1136,57 +1147,64 @@ function renderStep(step){
     document.getElementById('toStep2').onclick=()=> renderStep(tripHasGear(trip) ? 'gear' : 'data');
   }
 
-  /* Aluguel de equipamento — só nas saídas para Alcatrazes, onde há
-     mergulho livre. Máscara e snorkel já vão inclusos no passeio. */
+  /* Equipamento de mergulho livre — só nas saídas para Alcatrazes.
+     Primeiro a pessoa diz se precisa; se sim, quantos kits. */
   if(step==='gear'){
-    document.getElementById('modalTitle').textContent = 'Equipamento de mergulho';
+    document.getElementById('modalTitle').textContent = 'Equipamento de mergulho livre';
     const g = checkoutState.gear;
+    const choice = (val, title, sub) => `<button type="button" class="pay-opt gear-choice ${g.wanted===val?'sel':''}" data-wanted="${val}" style="display:block; width:100%; text-align:left; margin-bottom:10px; cursor:pointer; background:transparent; color:var(--foam); font:inherit;">
+        <div style="font-size:15px; font-weight:600;">${title}</div><div class="psub" style="font-size:12.5px; margin-top:4px;">${sub}</div></button>`;
     body.innerHTML = stepsTrack('gear') + `
-      <p style="color:var(--shallow); font-size:13.5px; line-height:1.7; margin-bottom:18px;">
-        Máscara e snorkel já estão inclusos na expedição. Se quiser, você pode alugar roupa de neoprene 2mm e nadadeira.
-        O tamanho é ajustado na prova presencial, antes do embarque.
+      <p style="color:var(--shallow); font-size:13.5px; line-height:1.7; margin-bottom:16px;">
+        Vai precisar de equipamento para o mergulho livre? O kit tem máscara, snorkel, roupa de neoprene 2mm e nadadeira. O tamanho é ajustado na prova, antes do embarque.
       </p>
-      <div class="qty-row">
-        <div>
-          <div style="font-size:14px;">Roupa de neoprene 2mm</div>
-          <div class="qty-note">R$ ${GEAR_ITEM_PRICE} por peça</div>
-        </div>
-        <div class="qty-ctrl">
-          <button id="wsMinus">−</button><span id="wsVal">${g.wetsuits}</span><button id="wsPlus">+</button>
-        </div>
-      </div>
-      <div class="qty-row">
-        <div>
-          <div style="font-size:14px;">Nadadeira</div>
-          <div class="qty-note">R$ ${GEAR_ITEM_PRICE} por par</div>
-        </div>
-        <div class="qty-ctrl">
-          <button id="fnMinus">−</button><span id="fnVal">${g.fins}</span><button id="fnPlus">+</button>
+      ${choice(false,'Não preciso','Vou levar o meu ou não vou entrar na água.')}
+      ${choice(true,'Sim, quero o kit',`Máscara, snorkel, roupa 2mm e nadadeira: R$ ${GEAR_KIT_PRICE} por pessoa.`)}
+      <div id="gearItems" style="display:${g.wanted===true?'block':'none'}; margin-top:8px;">
+        <div class="qty-row">
+          <div>
+            <div style="font-size:14px;">Kit completo</div>
+            <div class="qty-note">R$ ${GEAR_KIT_PRICE} por pessoa</div>
+          </div>
+          <div class="qty-ctrl">
+            <button type="button" id="kitMinus" aria-label="Menos kits">−</button>
+            <span id="kitVal">${g.kits}</span>
+            <button type="button" id="kitPlus" aria-label="Mais kits">+</button>
+          </div>
         </div>
       </div>
       <div class="summary-box">
         <div class="summary-line"><span>Expedição (${checkoutState.qty}×)</span><b>R$ ${trip.price*checkoutState.qty}</b></div>
-        <div class="summary-line"><span>Aluguel de equipamento</span><b id="gearSub">R$ ${gearTotal()}</b></div>
+        <div class="summary-line"><span>Equipamento</span><b id="gearSub">R$ ${gearTotal()}</b></div>
         <div class="summary-total"><span>Total</span><span id="gearTotalEl">R$ ${trip.price*checkoutState.qty + gearTotal()}</span></div>
       </div>
       <div style="display:flex; gap:10px;">
         <button class="btn btn-ghost" onclick="renderStep('qty')">Voltar</button>
-        <button class="btn btn-primary" style="flex:1;" id="gearNext">Continuar</button>
+        <button class="btn btn-primary" style="flex:1;" id="gearNext" ${g.wanted===null?'disabled':''}>Continuar</button>
       </div>
     `;
     const refreshGear = ()=>{
-      document.getElementById('wsVal').textContent = checkoutState.gear.wetsuits;
-      document.getElementById('fnVal').textContent = checkoutState.gear.fins;
+      document.getElementById('kitVal').textContent = checkoutState.gear.kits;
       document.getElementById('gearSub').textContent = 'R$ ' + gearTotal();
       document.getElementById('gearTotalEl').textContent = 'R$ ' + (trip.price*checkoutState.qty + gearTotal());
     };
-    // O máximo é o número de participantes: não faz sentido alugar mais
-    // peças do que pessoas embarcando.
-    document.getElementById('wsMinus').onclick=()=>{ if(checkoutState.gear.wetsuits>0){ checkoutState.gear.wetsuits--; refreshGear(); } };
-    document.getElementById('wsPlus').onclick=()=>{ if(checkoutState.gear.wetsuits<checkoutState.qty){ checkoutState.gear.wetsuits++; refreshGear(); } };
-    document.getElementById('fnMinus').onclick=()=>{ if(checkoutState.gear.fins>0){ checkoutState.gear.fins--; refreshGear(); } };
-    document.getElementById('fnPlus').onclick=()=>{ if(checkoutState.gear.fins<checkoutState.qty){ checkoutState.gear.fins++; refreshGear(); } };
-    document.getElementById('gearNext').onclick=()=> renderStep('data');
+    body.querySelectorAll('.gear-choice').forEach(btn=> btn.addEventListener('click', ()=>{
+      const wanted = btn.dataset.wanted === 'true';
+      checkoutState.gear.wanted = wanted;
+      // Quem quer o kit começa com um por pessoa; pode diminuir.
+      checkoutState.gear.kits = wanted ? (checkoutState.gear.kits || checkoutState.qty) : 0;
+      body.querySelectorAll('.gear-choice').forEach(b=> b.classList.toggle('sel', b===btn));
+      document.getElementById('gearItems').style.display = wanted ? 'block' : 'none';
+      document.getElementById('gearNext').disabled = false;
+      refreshGear();
+    }));
+    document.getElementById('kitMinus').onclick=()=>{ if(checkoutState.gear.kits>0){ checkoutState.gear.kits--; refreshGear(); } };
+    document.getElementById('kitPlus').onclick=()=>{ if(checkoutState.gear.kits<checkoutState.qty){ checkoutState.gear.kits++; refreshGear(); } };
+    document.getElementById('gearNext').onclick=()=>{
+      // Escolheu "sim" mas tirou todos os kits: na prática não quer.
+      if(checkoutState.gear.wanted && !checkoutState.gear.kits) checkoutState.gear.wanted = false;
+      renderStep('data');
+    };
   }
 
   if(step==='data'){
@@ -1369,9 +1387,10 @@ function renderStep(step){
     const expiresLabel = expiresAt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+expiresAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const tripName = 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
     const waNumber = WHATSAPP_NUMBER;
-    const gearLine = gearTotal() > 0
-      ? `Aluguel: ${checkoutState.gear.wetsuits ? checkoutState.gear.wetsuits+' roupa(s) 2mm' : ''}${checkoutState.gear.wetsuits && checkoutState.gear.fins ? ' + ' : ''}${checkoutState.gear.fins ? checkoutState.gear.fins+' nadadeira(s)' : ''} (R$ ${gearTotal()})\n`
-      : '';
+    const kitCount = checkoutState.gear.kits || 0;
+    const gearLine = !tripHasGear(TRIPS[checkoutState.key]) ? ''
+      : kitCount ? `Equipamento: ${kitText(kitCount)}, R$ ${gearTotal()}\n`
+      : `Equipamento: não precisa\n`;
     const waText = encodeURIComponent(
       `Olá! Acabei de fazer uma pré-reserva para o The Ocean Safari ${tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || ''}.\n\n`+
       `Código: ${code}\nData: ${dateLabel}\nParticipantes: ${checkoutState.qty}\n`+gearLine+`\n`+
@@ -1418,7 +1437,7 @@ async function submitPreReserva(){
     qty: checkoutState.qty,
     // O servidor recalcula o valor a partir destas quantidades e ignora
     // qualquer total que viesse daqui.
-    gear: { wetsuits: checkoutState.gear.wetsuits, fins: checkoutState.gear.fins },
+    gear: { kits: checkoutState.gear.kits || 0 },
     responsible: {
       name: checkoutState.name, email: checkoutState.email,
       phone: checkoutState.phone, cpf: checkoutState.cpf
@@ -1713,15 +1732,20 @@ async function submitManualReservation(){
   renderAdmin(); fetchTrips();
 }
 
+// Traduz os erros do servidor ao criar ou editar uma saída.
+function tripErrorMessage(data, fallback){
+  const e = data && data.error;
+  if(e === 'alcatrazes_requires_signature') return 'Alcatrazes só pode ser destino da linha Signature.';
+  if(e === 'trip_has_bookings_destination_change') return 'Essa saída já tem reserva: não dá para trocar o destino. Resolva as reservas antes.';
+  return fallback;
+}
 async function updateTripField(date, field, value, line){
   const body = { date, line: line || 'signature' };
   // destination é texto (Ilhabela/Alcatrazes); os demais campos são números.
   body[field] = field === 'destination' ? String(value) : Number(value);
   const { ok, data } = await apiSend('/api/admin/trips', 'PATCH', body);
   if(!ok){
-    showToast(data && data.error==='alcatrazes_requires_signature'
-      ? 'Alcatrazes só pode ser destino da linha Signature.'
-      : 'Não foi possível atualizar.');
+    showToast(tripErrorMessage(data, 'Não foi possível atualizar.'));
     renderAdmin();
     return;
   }
@@ -1768,7 +1792,7 @@ const LINE_PRESETS = {
   signature: { price: 599, capacity: 10 },
   explorer:  { price: 499, capacity: 16 }
 };
-const ALCATRAZES_PRICE = 749;
+const ALCATRAZES_PRICE = 730;
 function applyLineDefaults(){
   const line = document.getElementById('ntLine').value;
   const preset = LINE_PRESETS[line] || LINE_PRESETS.signature;
@@ -1793,7 +1817,7 @@ async function repriceFutureTrips(){
     { line:'signature', destination:'Alcatrazes', price:ALCATRAZES_PRICE,             label:'Alcatrazes' }
   ];
   const resumo = plan.map(p=>`${p.label}: R$ ${p.price}`).join('\n');
-  if(!confirm(`Aplicar estes preços a todas as saídas futuras?\n\n${resumo}\n\nDatas que já têm alguém reservado continuam com o preço antigo.`)) return;
+  if(!confirm(`Aplicar estes preços a todas as saídas futuras?\n\n${resumo}\n\nO horário também é corrigido (Alcatrazes: 7h às 13h). Datas que já têm alguém reservado continuam com o preço antigo.`)) return;
   let total = 0; const kept = []; let failed = false;
   for(const p of plan){
     const { ok, data } = await apiSend('/api/admin/trips/reprice', 'POST', { line:p.line, destination:p.destination, price:p.price });
@@ -1835,9 +1859,7 @@ async function createTrip(){
   if(!date){ showToast('Escolha uma data'); return; }
   const { ok, data } = await apiSend('/api/admin/trips', 'POST', { date, line, destination, price, capacity:cap, point });
   if(!ok){
-    showToast(data && data.error==='alcatrazes_requires_signature'
-      ? 'Alcatrazes só pode ser destino da linha Signature.'
-      : 'Não foi possível criar a saída.');
+    showToast(tripErrorMessage(data, 'Não foi possível criar a saída.'));
     return;
   }
   closeNewTripForm();
@@ -1852,12 +1874,12 @@ function exportCSV(){
     const s = String(v ?? '');
     return /^[=+\-@\t]/.test(s) ? `'${s}` : s;
   };
-  const rows = [['Código','Data','Linha','Responsável','Telefone','CPF','Pessoas','Roupa 2mm','Nadadeira','Aluguel (R$)','Status']];
+  const rows = [['Código','Data','Linha','Responsável','Telefone','CPF','Pessoas','Máscara','Snorkel','Roupa 2mm','Nadadeira','Equipamento (R$)','Status']];
   ADMIN_HOLDS.filter(h=>h.status==='CONFIRMADA').forEach(h=>{
     const lineLabel = (h.line||'signature')==='signature' ? 'Signature' : 'Explorer';
     const g = h.gear || {};
     rows.push([h.code, h.date, lineLabel, csvSafe(h.responsible.name), csvSafe(h.responsible.phone), csvSafe(h.responsible.cpf), h.qty,
-      g.wetsuits||0, g.fins||0, g.total||0, h.status]);
+      g.masks||0, g.snorkels||0, g.wetsuits||0, g.fins||0, g.total||0, h.status]);
   });
   const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
