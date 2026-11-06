@@ -265,15 +265,13 @@ body.menu-aberto .fixo{display:none!important}
 </style>
 <style>
 /* Alcatrazes: ajustes desta página */
-.passos.cinco{grid-template-columns:repeat(5,1fr)}
-@media (max-width:860px){.passos.cinco{grid-template-columns:1fr 1fr}.passos.cinco li:last-child{grid-column:1/-1}}
-.passos .hora{display:block;color:var(--azul);font-size:.82rem;font-weight:500;margin-bottom:6px;letter-spacing:.02em}
-.ponto-fotos.iguais{grid-template-columns:1fr 1fr}
-@media (max-width:640px){.ponto-fotos.iguais{grid-template-columns:1fr}}
-.aviso.alerta{max-width:720px}
-.bom-saber{margin:56px auto 0;max-width:760px;list-style:none;padding:0}
-.bom-saber li{padding:14px 0;border-top:1px solid var(--linha);color:#d2d2d7}
-.bom-saber b{color:#fff;font-weight:600}
+.foto-larga{display:block;width:100%;height:auto;border-radius:var(--raio);margin-top:44px}
+.dia-lista{list-style:none;padding:0;margin:44px auto 0;max-width:620px;text-align:left}
+.dia-lista li{display:grid;grid-template-columns:5.2rem 1fr;gap:16px;padding:16px 0;border-top:1px solid var(--linha);color:#d2d2d7}
+.dia-lista li:last-child{border-bottom:1px solid var(--linha)}
+.dia-lista b{color:var(--azul);font-weight:500}
+.dia-lista strong{color:#fff;font-weight:600;display:block}
+.incluso-linha{max-width:620px;margin:22px auto 0;color:var(--cinza);font-size:.95rem;text-align:center}
 </style>
 </head>
 <body>
@@ -296,7 +294,7 @@ body.menu-aberto .fixo{display:none!important}
 
 <main id="top">
 
-<!-- 1. HERO -->
+<!-- 1. ABERTURA -->
 <section class="hero-dive">
   <video class="fundo-hero" muted loop playsinline autoplay preload="metadata" poster="https://www.thecrazybiology.com/images/alcatrazes-hero-poster.webp"><source src="https://www.thecrazybiology.com/images/alcatrazes-hero.mp4" type="video/mp4"></video><div class="veu-hero"></div>
   <div class="wrap">
@@ -305,134 +303,65 @@ body.menu-aberto .fixo{display:none!important}
     <p>Seis horas de expedição até o Arquipélago de Alcatrazes, refúgio de vida silvestre protegido pelo ICMBio. Com condutor credenciado a bordo.</p>
     <div class="acoes">
       <a href="https://www.thecrazybiology.com/booking.html?destino=alcatrazes" class="btn btn-1">Ver datas e reservar</a>
-      <a href="#dia" class="btn btn-2">Como é o dia</a>
+      <a href="#agendar" class="btn btn-2">Como é o dia</a>
     </div>
   </div>
 </section>
 
-<!-- 2. EM NÚMEROS -->
+<!-- 2. O QUE É -->
 <section class="sobre">
   <img class="estampa" src="https://www.thecrazybiology.com/images/estampa-jubarte-submersa.webp" alt="" aria-hidden="true" style="--r:-8deg;--s:-1;right:-25%;top:0">
   <div class="wrap">
     <h2 style="text-align:center;margin:0 auto">Fechado por décadas. Aberto para poucos.</h2>
-    <p class="intro" style="text-align:center;margin-left:auto;max-width:46ch">Alcatrazes só pode ser visitado com condutor credenciado pelo ICMBio. Por isso as saídas são poucas e as vagas, limitadas.</p>
-    <div class="numeros">
-      <div><b>6 h</b><span>de expedição, das 7h às 13h</span></div>
-      <div><b>1h10</b><span>de travessia em mar aberto</span></div>
-      <div><b>10</b><span>vagas por saída</span></div>
-    </div>
+    <p class="intro" style="text-align:center;margin-left:auto;max-width:52ch">A cerca de 40 km da costa de São Sebastião, Alcatrazes foi alvo de treinos de tiro da Marinha e ficou fechado ao público por décadas. Desde 2016 é um refúgio protegido pelo ICMBio, com a maior colônia de fragatas do Atlântico Sul e espécies que não existem em nenhum outro lugar do planeta. A visita só acontece com condutor credenciado, e as vagas são poucas.</p>
+    <img class="foto-larga" src="https://www.thecrazybiology.com/images/alcatrazes-arquipelago.webp" alt="O Arquipélago de Alcatrazes visto do mar, com a ilha principal e seus picos ao fundo" width="1800" height="1350" loading="lazy">
   </div>
 </section>
 
-<!-- 3. O ARQUIPÉLAGO -->
-<section id="arquipelago">
-  <img class="estampa" src="https://www.thecrazybiology.com/images/estampa-jubarte-e-navio.webp" alt="" aria-hidden="true" style="--r:4deg;left:-25%;bottom:-20%">
-  <div class="wrap">
-    <h2>O que é Alcatrazes</h2>
-    <p class="intro">Um arquipélago a cerca de 40 km da costa de São Sebastião, um dos lugares mais preservados do litoral brasileiro.</p>
-    <div class="indica-grade">
-      <div class="indica-item"><h3>Antigo alvo da Marinha</h3><p>Por décadas a ilha principal foi usada em treinos de tiro da Marinha e ficou fechada ao público. Em 2016 virou Refúgio de Vida Silvestre, e hoje a visita só acontece com condutor credenciado.</p></div>
-      <div class="indica-item"><h3>Um ninhal no oceano</h3><p>Alcatrazes abriga a maior colônia de fragatas do Atlântico Sul, além de atobás e outras aves marinhas que se reproduzem nos paredões.</p></div>
-      <div class="indica-item"><h3>Espécies que só existem lá</h3><p>A jararaca-de-alcatrazes e a perereca-de-alcatrazes não vivem em nenhum outro lugar do planeta. O arquipélago é um laboratório vivo da evolução.</p></div>
-      <div class="indica-item"><h3>Um mar protegido</h3><p>A pesca é proibida em todo o refúgio, e dá para ver a diferença embaixo d'água: cardumes densos, costões cheios de vida e, com sorte, tubarões.</p></div>
-    </div>
-    <div class="ponto-fotos iguais">
-      <img src="https://www.thecrazybiology.com/images/alcatrazes-arquipelago.webp" alt="O Arquipélago de Alcatrazes visto do mar, com a ilha principal e seus picos ao fundo" width="1800" height="1350" loading="lazy">
-      <img src="https://www.thecrazybiology.com/images/alcatrazes-paredao-foto.webp" alt="Paredão de pedra da ilha principal de Alcatrazes, coberto de vegetação, visto de perto do barco" width="1800" height="1350" loading="lazy">
-    </div>
-    <p class="nota" style="text-align:center">Ninguém desembarca na ilha: a visita é feita toda do barco e da água, como determina o ICMBio.</p>
-  </div>
-</section>
-
-<!-- 4. GALERIA -->
+<!-- 3. GALERIA -->
 <section class="galeria-sec">
   <div class="wrap">
     <h2>Como é Alcatrazes</h2>
-    <p class="intro">Registros reais das nossas saídas. Cada dia é diferente, e os encontros com os animais não são garantidos.</p>
+    <p class="intro">Registros reais das nossas saídas. Os encontros com os animais nunca são garantidos.</p>
   </div>
   <div class="galeria">
     <figure>
-      <video src="https://www.thecrazybiology.com/images/alcatrazes-cardumes.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-cardumes-poster.webp" muted loop playsinline autoplay preload="metadata" width="720" height="1280"></video>
+      <video data-src="https://www.thecrazybiology.com/images/alcatrazes-cardumes.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-cardumes-poster.webp" muted loop playsinline preload="none" width="720" height="1280"></video>
       <figcaption>O fundo do mar de Alcatrazes</figcaption>
     </figure>
     <figure>
-      <video src="https://www.thecrazybiology.com/images/alcatrazes-tubaroes.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-tubaroes-poster.webp" muted loop playsinline autoplay preload="metadata" width="720" height="1280"></video>
+      <video data-src="https://www.thecrazybiology.com/images/alcatrazes-tubaroes.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-tubaroes-poster.webp" muted loop playsinline preload="none" width="720" height="1280"></video>
       <figcaption>O fundo do mar de Alcatrazes</figcaption>
     </figure>
     <figure>
-      <video src="https://www.thecrazybiology.com/images/alcatrazes-recife.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-recife-poster.webp" muted loop playsinline autoplay preload="metadata" width="720" height="1280"></video>
-      <figcaption>O fundo do mar de Alcatrazes</figcaption>
-    </figure>
-    <figure>
-      <video src="https://www.thecrazybiology.com/images/alcatrazes-paredao.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-paredao-poster.webp" muted loop playsinline autoplay preload="metadata" width="1280" height="720"></video>
+      <video data-src="https://www.thecrazybiology.com/images/alcatrazes-paredao.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-paredao-poster.webp" muted loop playsinline preload="none" width="1280" height="720"></video>
       <figcaption>Os paredões da ilha</figcaption>
     </figure>
     <figure>
-      <video src="https://www.thecrazybiology.com/images/alcatrazes-ilha.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-ilha-poster.webp" muted loop playsinline autoplay preload="metadata" width="1280" height="720"></video>
+      <video data-src="https://www.thecrazybiology.com/images/alcatrazes-recife.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-recife-poster.webp" muted loop playsinline preload="none" width="720" height="1280"></video>
+      <figcaption>O fundo do mar de Alcatrazes</figcaption>
+    </figure>
+    <figure>
+      <video data-src="https://www.thecrazybiology.com/images/alcatrazes-ilha.mp4" poster="https://www.thecrazybiology.com/images/alcatrazes-ilha-poster.webp" muted loop playsinline preload="none" width="1280" height="720"></video>
       <figcaption>A volta de barco pelo arquipélago</figcaption>
     </figure>
   </div>
-  <div class="wrap"><p class="legenda-grupo">Cenas The Ocean Safari Alcatrazes</p><p class="dica-galeria">Arraste para o lado para ver mais.</p></div>
+  <div class="wrap"><p class="dica-galeria">Arraste para o lado para ver mais.</p></div>
 </section>
 
-<!-- 5. COMO É O DIA -->
-<section id="dia">
-  <img class="estampa" src="https://www.thecrazybiology.com/images/estampa-manta.webp" alt="" aria-hidden="true" style="--r:12deg;--s:-1;right:-30%;bottom:-25%">
-  <div class="wrap">
-    <h2>Como é o dia</h2>
-    <ol class="passos cinco">
-      <li><span class="hora">7h</span><h3>Embarque</h3><p>No Píer da Vila ou Píer do Perequê, em Ilhabela, ou Píer da Rua da Praia, em São Sebastião. Briefing de segurança e das regras do refúgio.</p></li>
-      <li><span class="hora">cerca de 1h10</span><h3>Safari na travessia</h3><p>O safari começa no caminho: em mar aberto, procuramos golfinhos, baleias e tubarões.</p></li>
-      <li><span class="hora">chegada</span><h3>Volta pela ilha</h3><p>De barco, pelos paredões e florestas, observando as aves marinhas e, com sorte, tubarões ao redor.</p></li>
-      <li><span class="hora">conforme a corrente</span><h3>Mergulho livre</h3><p>Escolhemos os pontos do dia e entramos na água para explorar a vida subaquática de cada um.</p></li>
-      <li><span class="hora">13h</span><h3>Retorno</h3><p>Navegação de volta ao ponto de embarque.</p></li>
-    </ol>
-    <div class="aviso alerta">
-      <h3>O ponto dos tubarões</h3>
-      <p>O ponto com mais chance de ver tubarões é o mais fundo, por volta de 12 metros. Para observá-los de perto é preciso ter experiência em mergulho livre. Quem não tem aproveita os outros pontos do dia.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 6. INCLUSO -->
-<section class="paraquem">
-  <div class="wrap">
-    <h2>O que está incluso</h2>
-    <div class="incluso">
-      <div>
-        <h3>Incluso</h3>
-        <ul>
-          <li>Condutor credenciado pelo ICMBio a bordo</li>
-          <li>Lanches a bordo</li>
-          <li>Bebidas</li>
-          <li>Banheiro a bordo</li>
-          <li>Wi-Fi na embarcação</li>
-        </ul>
-      </div>
-      <div>
-        <h3>Opcional</h3>
-        <ul>
-          <li>Kit de mergulho livre: máscara, snorkel, roupa de neoprene 2mm e nadadeira, por R$ 100 por pessoa. Você escolhe na hora da reserva.</li>
-        </ul>
-        <p class="nota">O tamanho da roupa e da nadadeira é ajustado na prova, antes do embarque.</p>
-      </div>
-    </div>
-    <ul class="bom-saber">
-      <li><b>Idade mínima:</b> 12 anos.</li>
-      <li><b>Mar aberto:</b> a travessia tem balanço e risco de enjoo.</li>
-      <li><b>Natureza livre:</b> nenhum avistamento é garantido.</li>
-      <li><b>Mau tempo:</b> se o mar não permitir a saída com segurança, você escolhe entre reembolso integral ou remarcação gratuita.</li>
-      <li><b>Autorização do ICMBio:</b> se o ICMBio suspender a visita, priorizamos a remarcação, conforme a política de cancelamento que você aceita na reserva.</li>
-    </ul>
-  </div>
-</section>
-
-<!-- 7. PREÇO E RESERVA -->
+<!-- 4. O DIA + PREÇO -->
 <section class="final" id="agendar" style="background:var(--grafite)">
   <div class="wrap">
-    <h2>Garanta sua vaga em Alcatrazes.</h2>
-    <div class="preco-dive"><b>R$ 730</b><span>por pessoa. Kit de mergulho livre opcional, R$ 100.</span></div>
-    <p class="intro">Poucas datas por temporada, conforme autorização do ICMBio. Escolha a sua no calendário.</p>
+    <h2>Como é o dia</h2>
+    <ol class="dia-lista">
+      <li><b>7h</b><span><strong>Embarque</strong>Nos píers de Ilhabela ou de São Sebastião.</span></li>
+      <li><b>1h10</b><span><strong>Safari na travessia</strong>Em mar aberto, atrás de golfinhos, baleias e tubarões.</span></li>
+      <li><b>Chegada</b><span><strong>Volta de barco pela ilha</strong>Paredões, florestas e aves marinhas.</span></li>
+      <li><b>Depois</b><span><strong>Mergulho livre</strong>Nos melhores pontos do dia, conforme a corrente.</span></li>
+      <li><b>Volta</b><span><strong>Safari no retorno</strong>Mais uma procurada em mar aberto no caminho de volta, com chegada ao píer às 13h.</span></li>
+    </ol>
+    <p class="incluso-linha">Incluso: condutor credenciado, lanches, bebidas, banheiro e Wi-Fi a bordo.</p>
+    <div class="preco-dive"><b>R$ 730</b><span>por pessoa · 10 vagas por saída · kit de mergulho livre opcional, R$ 100</span></div>
     <div class="acoes">
       <a href="https://www.thecrazybiology.com/booking.html?destino=alcatrazes" class="btn btn-1">Ver datas e reservar</a>
       <a href="https://wa.me/5511937491509?text=Oi%2C%20Daniel!%20Vi%20o%20site%20e%20tenho%20uma%20d%C3%BAvida%20sobre%20o%20The%20Ocean%20Safari%20Alcatrazes." class="btn btn-2">Tirar dúvidas no WhatsApp</a>
@@ -440,29 +369,20 @@ body.menu-aberto .fixo{display:none!important}
   </div>
 </section>
 
-<!-- 8. DÚVIDAS -->
+<!-- 5. DÚVIDAS -->
 <section class="faq" id="duvidas-alcatrazes">
   <div class="wrap">
     <h2>Dúvidas frequentes</h2>
     <div class="faq-lista">
-      <details><summary>Preciso saber mergulhar?</summary><p>Não para aproveitar a expedição: o safari e a volta pela ilha são feitos do barco, e há pontos de mergulho livre para todos. Só o ponto dos tubarões, por volta de 12 metros, exige experiência em mergulho livre.</p></details>
-      <details><summary>Dá para descer na ilha?</summary><p>Não. O desembarque é proibido pelo ICMBio. A visita é toda feita do barco e da água.</p></details>
-      <details><summary>Vou ver tubarões?</summary><p>Não é garantido. Os animais são livres, e cada saída é diferente.</p></details>
-      <details><summary>Qual a idade mínima?</summary><p>12 anos.</p></details>
+      <details><summary>Preciso saber mergulhar?</summary><p>Não. O safari e a volta pela ilha são feitos do barco, e há pontos de mergulho livre para todos. Só o ponto com mais chance de tubarões, por volta de 12 metros de profundidade, exige experiência em mergulho livre.</p></details>
       <details><summary>Onde é o embarque?</summary><p>Em Ilhabela, no Píer da Vila ou no Píer do Perequê, ou em São Sebastião, no Píer da Rua da Praia. O píer da sua saída é confirmado junto com a reserva.</p></details>
-      <details><summary>Preciso levar equipamento?</summary><p>Não. Se quiser, alugue o kit de mergulho livre com máscara, snorkel, roupa de neoprene 2mm e nadadeira por R$ 100 por pessoa, na hora da reserva.</p></details>
-      <details><summary>E se o tempo não deixar?</summary><p>Se o mar não permitir navegar com segurança, você escolhe entre reembolso integral ou remarcação gratuita. Se o ICMBio suspender a visita, priorizamos a remarcação, conforme a política de cancelamento.</p></details>
+      <details><summary>Preciso levar equipamento?</summary><p>Não. Se quiser, alugue na reserva o kit de mergulho livre, com máscara, snorkel, roupa de neoprene 2mm e nadadeira, por R$ 100 por pessoa. O tamanho é ajustado na prova, antes do embarque.</p></details>
+      <details><summary>Qual a idade mínima?</summary><p>12 anos.</p></details>
+      <details><summary>Dá para descer na ilha?</summary><p>Não. O desembarque é proibido pelo ICMBio. A visita é feita toda do barco e da água.</p></details>
+      <details><summary>Vou ver tubarões?</summary><p>Não é garantido. Os animais são livres, e cada saída é diferente.</p></details>
+      <details><summary>O mar balança?</summary><p>Sim. A travessia é em mar aberto, e quem costuma enjoar deve se preparar.</p></details>
+      <details><summary>E se o tempo não deixar?</summary><p>Se o mar não permitir navegar com segurança, você escolhe entre reembolso integral ou remarcação gratuita. Se o ICMBio suspender a visita, priorizamos a remarcação, conforme a política de cancelamento que você aceita na reserva.</p></details>
     </div>
-  </div>
-</section>
-
-<!-- 9. OUTRA EXPERIÊNCIA -->
-<section style="text-align:center">
-  <div class="wrap">
-    <span class="tag">Também com a gente</span>
-    <h2>O safari em Ilhabela.</h2>
-    <p class="intro">No The Ocean Safari você passa seis horas em mar aberto procurando a vida marinha de Ilhabela.</p>
-    <div class="acoes"><a href="https://www.thecrazybiology.com/#safari" class="btn btn-2">Conhecer o Safari</a></div>
   </div>
 </section>
 
@@ -501,6 +421,15 @@ addEventListener("scroll",botao,{passive:true});botao();
 // easter egg: 5 cliques no logo
 let c=0,t;const egg=document.getElementById("ohyes");
 document.getElementById("logo").addEventListener("click",()=>{c++;clearTimeout(t);t=setTimeout(()=>c=0,1500);if(c>=5){c=0;egg.classList.add("on");setTimeout(()=>egg.classList.remove("on"),1800);}});
+
+// vídeos da galeria: só baixam quando chegam perto da tela, e pausam
+// quando saem. Quem não rola até a galeria não gasta dados com eles.
+const vids=document.querySelectorAll(".galeria video[data-src]");
+function carrega(v){if(!v.src){v.src=v.dataset.src;}}
+if("IntersectionObserver" in window){
+  const io=new IntersectionObserver(es=>es.forEach(e=>{const v=e.target;if(e.isIntersecting){carrega(v);v.play().catch(()=>{});}else if(v.src){v.pause();}}),{rootMargin:"200px 0px"});
+  vids.forEach(v=>io.observe(v));
+}else{vids.forEach(v=>{carrega(v);v.autoplay=true;v.play().catch(()=>{});});}
 </script>
 </body>
 </html>
