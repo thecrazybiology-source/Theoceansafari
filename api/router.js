@@ -38,7 +38,26 @@ const LINE_DEFAULTS = {
 
 // Alcatrazes sai no barco da Signature, mas tem preço próprio.
 // Precisa ser igual ao ALCATRAZES_PRICE do booking.html.
-const ALCATRAZES_PRICE = 749;
+const ALCATRAZES_PRICE = 730;
+// Alcatrazes sai uma hora depois do Safari de Ilhabela: 7h às 13h.
+const ALCATRAZES_TIMES = { start: '07:00', end: '13:00' };
+// Horário padrão de uma saída conforme linha e destino.
+function defaultTimes(line, dest) {
+  return isAlcatrazes(dest) ? ALCATRAZES_TIMES : { start: LINE_DEFAULTS[line].start, end: LINE_DEFAULTS[line].end };
+}
+
+// Uma saída que já tem gente pré-reservada ou confirmada não pode trocar
+// de destino: quem reservou Ilhabela passaria a constar em Alcatrazes
+// (ou o contrário) sem saber. Devolve true se a troca deve ser barrada.
+async function destinationChangeBlocked(pool, date, line, newDest) {
+  const { rows } = await pool.query(
+    `SELECT destination, held, confirmed FROM trips WHERE date = $1 AND line = $2`, [date, line]
+  );
+  if (!rows.length) return false;
+  const cur = rows[0];
+  const changing = String(cur.destination || 'Ilhabela').trim().toLowerCase() !== String(newDest || 'Ilhabela').trim().toLowerCase();
+  return changing && (Number(cur.held) > 0 || Number(cur.confirmed) > 0);
+}
 function isAlcatrazes(dest) { return String(dest || '').trim().toLowerCase() === 'alcatrazes'; }
 
 // Normaliza o que vier do cliente/admin. Qualquer coisa fora da lista
@@ -59,18 +78,35 @@ function generateAcceptanceHash({ termsVersion, cpf, signatureName, acceptedAt }
   return 'sha256-' + crypto.createHash('sha256').update(raw).digest('hex');
 }
 
-// Aluguel de equipamento de mergulho. Só existe nas saídas para
-// Alcatrazes, onde há mergulho livre. Máscara e snorkel já vão inclusos
-// no passeio; o que se aluga é roupa de neoprene 2mm e nadadeira.
-// O tamanho não é escolhido aqui: a pessoa prova presencialmente antes
-// do embarque. O que importa nesta etapa é quantas peças separar.
-const GEAR_ITEM_PRICE = 60; // por peça, em reais
+// Equipamento de mergulho livre. Só existe nas saídas para Alcatrazes.
+// Um kit por pessoa: máscara, snorkel, roupa de neoprene 2mm e nadadeira,
+// por R$ 100. Cada kit conta uma peça de cada, então a quantidade de kits
+// também diz quantas máscaras, snorkels, roupas e nadadeiras separar.
+// O tamanho é ajustado na prova presencial, antes do embarque.
+// Precisa ser igual ao GEAR_KIT_PRICE do booking.html.
+const GEAR_KIT_PRICE = 100; // por kit, em reais
 
-// O total do aluguel é sempre recalculado aqui, a partir das quantidades.
+// O total é sempre recalculado aqui, a partir da quantidade de kits.
 // Nunca se aceita um valor vindo do navegador: quem envia o pedido
 // poderia simplesmente mandar zero.
-function calcGearTotalCents({ wetsuits = 0, fins = 0 }) {
-  return (Number(wetsuits) + Number(fins)) * GEAR_ITEM_PRICE * 100;
+function calcGearTotalCents(kits) {
+  return Number(kits || 0) * GEAR_KIT_PRICE * 100;
+}
+
+// Máscara e snorkel ganharam colunas próprias depois que o banco já
+// existia. Em vez de pedir para rodar SQL na mão no Neon, o servidor
+// cria as colunas sozinho na primeira vez (IF NOT EXISTS: rodar de novo
+// não faz nada). Se por algum motivo não conseguir, a reserva continua
+// funcionando, só sem gravar máscara e snorkel.
+let gearColumnsReady = null;
+function ensureGearColumns(pool) {
+  if (!gearColumnsReady) {
+    gearColumnsReady = pool.query(
+      `ALTER TABLE holds ADD COLUMN IF NOT EXISTS gear_masks INTEGER NOT NULL DEFAULT 0,
+                         ADD COLUMN IF NOT EXISTS gear_snorkels INTEGER NOT NULL DEFAULT 0`
+    ).then(() => true).catch((err) => { console.error('ensureGearColumns', err); gearColumnsReady = null; return false; });
+  }
+  return gearColumnsReady;
 }
 
 // Normaliza uma quantidade de peças: inteiro entre 0 e o número de
@@ -231,6 +267,7 @@ async function holdsPost(req, res) {
   });
 
   const pool = getPool();
+  const gearColsOk = await ensureGearColumns(pool);
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -246,10 +283,11 @@ async function holdsPost(req, res) {
     // assim uma reserva de Ilhabela não vem com R$ 120 de aluguel colado.
     const destination = holdRes.rows[0].destination || 'Ilhabela';
     const gearAllowed = String(destination).toLowerCase() === 'alcatrazes';
-    const gear = (body.gear && typeof body.gear === 'object') ? body.gear : {};
-    const gearWetsuits = gearAllowed ? normalizeGearQty(gear.wetsuits, qty) : 0;
-    const gearFins = gearAllowed ? normalizeGearQty(gear.fins, qty) : 0;
-    const gearTotalCents = calcGearTotalCents({ wetsuits: gearWetsuits, fins: gearFins });
+    const gearIn = (body.gear && typeof body.gear === 'object') ? body.gear : {};
+    const kits = gearAllowed ? normalizeGearQty(gearIn.kits, qty) : 0;
+    // Cada kit é uma máscara, um snorkel, uma roupa 2mm e uma nadadeira.
+    const gear = { masks: kits, snorkels: kits, wetsuits: kits, fins: kits };
+    const gearTotalCents = calcGearTotalCents(kits);
 
     const seqRes = await client.query(`SELECT nextval('hold_code_seq') AS n`);
     const year = new Date(`${date}T00:00:00Z`).getUTCFullYear();
@@ -259,22 +297,25 @@ async function holdsPost(req, res) {
     const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
     const ua = req.headers['user-agent'] || '';
 
-    const insertRes = await client.query(
-      `INSERT INTO holds (code, trip_date, trip_line, qty, status, responsible_name, responsible_email, responsible_phone,
+    const baseValues = [code, date, line, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf,
+      JSON.stringify(participants || []), healthAnswer === true, healthNote || null, healthConsent === true,
+      TERMS_VERSION, acceptedAt, documentHash, ip, ua, expiresAt,
+      gear.wetsuits, gear.fins, gearTotalCents];
+    const baseCols = `code, trip_date, trip_line, qty, status, responsible_name, responsible_email, responsible_phone,
          responsible_cpf, participants, health_answer, health_note, health_consent, terms_version,
          terms_accepted_at, terms_document_hash, accept_ip, accept_user_agent, expires_at,
-         gear_wetsuits, gear_fins, gear_total_cents)
-       VALUES ($1,$2,$3,$4,'AGUARDANDO_CONTATO',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)
-       RETURNING code, expires_at`,
-      [code, date, line, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf,
-        JSON.stringify(participants || []), healthAnswer === true, healthNote || null, healthConsent === true,
-        TERMS_VERSION, acceptedAt, documentHash, ip, ua, expiresAt,
-        gearWetsuits, gearFins, gearTotalCents]
-    );
+         gear_wetsuits, gear_fins, gear_total_cents`;
+    const baseParams = `$1,$2,$3,$4,'AGUARDANDO_CONTATO',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21`;
+    const insertRes = gearColsOk
+      ? await client.query(
+          `INSERT INTO holds (${baseCols}, gear_masks, gear_snorkels) VALUES (${baseParams},$22,$23) RETURNING code, expires_at`,
+          [...baseValues, gear.masks, gear.snorkels])
+      : await client.query(
+          `INSERT INTO holds (${baseCols}) VALUES (${baseParams}) RETURNING code, expires_at`, baseValues);
     await client.query('COMMIT');
     res.status(201).json({
       code: insertRes.rows[0].code, expiresAt: insertRes.rows[0].expires_at, line,
-      gear: { wetsuits: gearWetsuits, fins: gearFins, total: gearTotalCents / 100 },
+      gear: { ...gear, total: gearTotalCents / 100 },
       status: 'AGUARDANDO_CONTATO'
     });
   } catch (err) {
@@ -367,6 +408,10 @@ async function adminTrips(req, res) {
     if (dest.toLowerCase() === 'alcatrazes' && line !== 'signature') {
       return res.status(400).json({ error: 'alcatrazes_requires_signature' });
     }
+    if (await destinationChangeBlocked(pool, date, line, dest)) {
+      return res.status(409).json({ error: 'trip_has_bookings_destination_change' });
+    }
+    const times = defaultTimes(line, dest);
 
     await pool.query(
       `INSERT INTO trips (date, line, destination, start_time, end_time, meeting_point, price_cents, capacity)
@@ -374,7 +419,7 @@ async function adminTrips(req, res) {
        ON CONFLICT (date, line) DO UPDATE SET capacity=EXCLUDED.capacity, start_time=EXCLUDED.start_time,
          end_time=EXCLUDED.end_time, meeting_point=EXCLUDED.meeting_point, destination=EXCLUDED.destination,
          price_cents=EXCLUDED.price_cents, updated_at=now()`,
-      [date, line, dest, start || defaults.start, end || defaults.end,
+      [date, line, dest, start || times.start, end || times.end,
         point || 'Ilhabela', Math.round(priceValue * 100), cap]
     );
     return res.status(201).json({ ok: true, line });
@@ -388,11 +433,20 @@ async function adminTrips(req, res) {
     if (destination && String(destination).toLowerCase() === 'alcatrazes' && line !== 'signature') {
       return res.status(400).json({ error: 'alcatrazes_requires_signature' });
     }
+    if (destination != null && await destinationChangeBlocked(pool, date, line, destination)) {
+      return res.status(409).json({ error: 'trip_has_bookings_destination_change' });
+    }
 
     const fields = [], values = []; let i = 1;
     if (capacity != null) { fields.push(`capacity = $${i++}`); values.push(capacity); }
     if (price != null) { fields.push(`price_cents = $${i++}`); values.push(Math.round(price * 100)); }
-    if (destination != null) { fields.push(`destination = $${i++}`); values.push(String(destination)); }
+    if (destination != null) {
+      fields.push(`destination = $${i++}`); values.push(String(destination));
+      // Trocar o destino também troca o horário (Alcatrazes é 7h às 13h).
+      const t = defaultTimes(line, destination);
+      fields.push(`start_time = $${i++}`); values.push(t.start);
+      fields.push(`end_time = $${i++}`); values.push(t.end);
+    }
     if (status) {
       if (!['scheduled', 'blocked'].includes(status)) return res.status(400).json({ error: 'invalid_status' });
       fields.push(`status = $${i++}`); values.push(status);
@@ -466,13 +520,14 @@ async function adminTripsBulkPost(req, res) {
 
 async function adminHoldsGet(req, res) {
   const pool = getPool();
+  await ensureGearColumns(pool);
   const { rows } = await pool.query(`SELECT * FROM holds ORDER BY created_at DESC LIMIT 500`);
   res.status(200).json({
     holds: rows.map((h) => ({
       code: h.code, date: dateStr(h.trip_date), line: h.trip_line || DEFAULT_LINE, qty: h.qty, status: h.status,
       responsible: { name: h.responsible_name, email: h.responsible_email, phone: h.responsible_phone, cpf: h.responsible_cpf },
       participants: h.participants, healthAnswer: h.health_answer, healthNote: h.health_note,
-      gear: { wetsuits: h.gear_wetsuits || 0, fins: h.gear_fins || 0, total: (h.gear_total_cents || 0) / 100 },
+      gear: { masks: h.gear_masks || 0, snorkels: h.gear_snorkels || 0, wetsuits: h.gear_wetsuits || 0, fins: h.gear_fins || 0, total: (h.gear_total_cents || 0) / 100 },
       termsVersion: h.terms_version, termsAcceptedAt: h.terms_accepted_at, documentHash: h.terms_document_hash,
       acceptIp: h.accept_ip, acceptUserAgent: h.accept_user_agent, createdAt: h.created_at, expiresAt: h.expires_at,
       confirmedAt: h.confirmed_at, cancelledAt: h.cancelled_at, adminNotes: h.admin_notes
@@ -592,7 +647,16 @@ async function adminTripsRepricePost(req, res) {
      ORDER BY date ASC`,
     [priceCents, line, dest]
   );
-  res.status(200).json({ ok: true, updated: updated.rowCount, keptWithBookings: kept.rows.map((r) => dateStr(r.date)) });
+  // Horário não é preço combinado: corrige em todas as saídas futuras,
+  // inclusive as que já têm reserva, para o calendário mostrar o certo.
+  const t = defaultTimes(line, dest);
+  const timesFixed = await pool.query(
+    `UPDATE trips SET start_time = $1, end_time = $2, updated_at = now()
+     WHERE date >= CURRENT_DATE AND line = $3 AND LOWER(COALESCE(destination, 'Ilhabela')) = LOWER($4)
+       AND (start_time IS DISTINCT FROM $1 OR end_time IS DISTINCT FROM $2)`,
+    [t.start, t.end, line, dest]
+  );
+  res.status(200).json({ ok: true, updated: updated.rowCount, timesFixed: timesFixed.rowCount, keptWithBookings: kept.rows.map((r) => dateStr(r.date)) });
 }
 
 // ============================================================
