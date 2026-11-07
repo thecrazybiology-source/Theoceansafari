@@ -535,8 +535,8 @@ function tripLabel(t){
 }
 if(DEST_MODE === 'alcatrazes'){
   document.title = 'Reservar Alcatrazes · The Ocean Safari';
-  document.getElementById('bookingEyebrow').textContent = 'The Ocean Safari Alcatrazes';
-  document.getElementById('bookingIntro').textContent = 'Poucas saídas por temporada, sempre no barco Signature, conforme autorização do ICMBio. Escolha um dia para ver horário, vagas e reservar.';
+  document.getElementById('bookingEyebrow').textContent = 'Alcatrazes · Pélago Expedições';
+  document.getElementById('bookingIntro').textContent = 'Uma expedição da Pélago Expedições, operadora credenciada, com condução de Daniel Munhoz. Poucas saídas por temporada, conforme autorização do ICMBio. Escolha um dia para ver horário, vagas e reservar.';
   document.getElementById('bookingSwitch').innerHTML = '<a href="booking.html">Procurando o Safari em Ilhabela? Ver as datas</a>';
 }
 
@@ -855,7 +855,7 @@ async function fetchTrips(){
   if(selectedDateKey) renderDetail(selectedDateKey);
   else if(DEST_MODE === 'alcatrazes' && !Object.keys(TRIPS).length){
     document.getElementById('detailPanel').innerHTML = `<div class="detail-empty">Ainda não há datas abertas para Alcatrazes.<br><br>
-      <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Quero saber das próximas datas do The Ocean Safari Alcatrazes.')}" target="_blank" rel="noopener">Pergunte pelas próximas no WhatsApp</a></div>`;
+      <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Quero saber das próximas datas da expedição para Alcatrazes (Pélago Expedições).')}" target="_blank" rel="noopener">Pergunte pelas próximas no WhatsApp</a></div>`;
   }
 }
 
@@ -1385,14 +1385,17 @@ function renderStep(step){
     // O prazo é configurável no painel; o texto usa o horário real que o
     // servidor devolveu, nunca um número fixo.
     const expiresLabel = expiresAt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+expiresAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    const tripName = 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
+    // Alcatrazes é produto da Pélago Expedições: não leva a marca The Ocean Safari.
+    const isAlc = isAlcatrazesTrip(TRIPS[checkoutState.key]);
+    const tripName = isAlc ? 'Alcatrazes · Pélago Expedições' : 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
     const waNumber = WHATSAPP_NUMBER;
     const kitCount = checkoutState.gear.kits || 0;
     const gearLine = !tripHasGear(TRIPS[checkoutState.key]) ? ''
       : kitCount ? `Equipamento: ${kitText(kitCount)}, R$ ${gearTotal()}\n`
       : `Equipamento: não precisa\n`;
     const waText = encodeURIComponent(
-      `Olá! Acabei de fazer uma pré-reserva para o The Ocean Safari ${tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || ''}.\n\n`+
+      (isAlc ? `Olá! Acabei de fazer uma pré-reserva para a expedição Alcatrazes (Pélago Expedições).\n\n`
+        : `Olá! Acabei de fazer uma pré-reserva para o The Ocean Safari ${tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || ''}.\n\n`)+
       `Código: ${code}\nData: ${dateLabel}\nParticipantes: ${checkoutState.qty}\n`+gearLine+`\n`+
       `Gostaria de finalizar minha reserva.`
     );
@@ -1414,6 +1417,7 @@ function renderStep(step){
         <div class="summary-line"><span>Data</span><b>${dateLabel}</b></div>
         <div class="summary-line"><span>Participantes</span><b>${checkoutState.qty}</b></div>
         <div class="summary-line"><span>Prazo da pré-reserva</span><b>${expiresLabel}</b></div>
+        ${isAlc ? `<div class="summary-line"><span>Operadora</span><b>Pélago Expedições</b></div>` : ''}
       </div>
       <a class="btn btn-primary btn-block" href="${waLink}" target="_blank" rel="noopener" style="text-align:center; text-decoration:none; display:block;">Continuar pelo WhatsApp</a>
       <button class="btn btn-ghost btn-block" style="margin-top:10px;" onclick="closeModal()">Fechar</button>
