@@ -107,8 +107,9 @@ header{position:fixed;inset:0 0 auto;z-index:30;padding-top:env(safe-area-inset-
 .videos figure{margin:0;flex:0 0 min(300px,72vw);scroll-snap-align:center}
 .videos video{width:100%;border-radius:var(--raio);aspect-ratio:9/16;object-fit:cover;background:var(--grafite)}
 .videos figcaption{color:var(--cinza);font-size:.85rem;margin-top:12px;text-align:center}
-.fotos-alc{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:36px;align-items:start}
-.fotos-alc figure{margin:0}
+.fotos-alc{display:flex;gap:18px;margin-top:36px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;align-items:flex-start}
+.fotos-alc::-webkit-scrollbar{display:none}
+.fotos-alc figure{margin:0;flex:0 0 min(280px,72vw);scroll-snap-align:start}
 .fotos-alc img,.fotos-alc video{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:28px;display:block;background:var(--grafite)}
 .fotos-alc figcaption{color:var(--cinza);font-size:.85rem;margin-top:12px;text-align:center}
 
@@ -291,6 +292,16 @@ body.menu-aberto .fixo{display:none!important}
   </div>
 </section>
 
+<!-- VÍDEO DO TOPO: The Ocean Safari -->
+<section class="topo-video">
+  <div class="wrap">
+    <figure style="margin:0 auto;max-width:760px">
+      <video src="cilindro-clip.mp4" muted loop playsinline autoplay preload="metadata" style="width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:28px;display:block;background:var(--grafite)"></video>
+      <figcaption class="legenda-grupo">The Ocean Safari</figcaption>
+    </figure>
+  </div>
+</section>
+
 <!-- ATALHO: por onde começar -->
 <section class="proximas" id="proximas">
   <div class="wrap">
@@ -405,7 +416,6 @@ body.menu-aberto .fixo{display:none!important}
         <figcaption class="legenda-grupo">Tubarões-mangona em Alcatrazes</figcaption>
       </figure>
       <figure style="margin:0"><img src="images/foto-alcatrazes.webp" alt="Arquipélago de Alcatrazes" loading="lazy" style="width:100%;border-radius:28px;display:block"><figcaption class="legenda-grupo">O arquipélago de Alcatrazes</figcaption></figure>
-      <figure style="margin:0"><img src="images/foto-dolphins.webp" alt="Golfinhos nadando perto do barco" loading="lazy" style="width:100%;border-radius:28px;display:block"><figcaption class="legenda-grupo">Golfinhos, o ano todo, com chance de avistamento</figcaption></figure>
       <figure style="margin:0"><img src="images/foto-humpback-full.webp" alt="Baleia-jubarte" loading="lazy" style="width:100%;border-radius:28px;display:block"><figcaption class="legenda-grupo">Baleia-jubarte: na temporada certa, de maio a agosto</figcaption></figure>
     </div>
   </div>
