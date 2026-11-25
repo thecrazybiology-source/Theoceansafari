@@ -280,7 +280,7 @@ body.menu-aberto .fixo{display:none!important}
   </figure>
   <div class="wrap">
     <h1>Viva, entenda e proteja a natureza.</h1>
-    <p>The Ocean Safari: safari marinho em Alcatrazes, com mergulho livre e de cilindro. Guiado por um biólogo e instrutor de mergulho.</p>
+    <p>Seis horas em mar aberto em Alcatrazes, com um biólogo a bordo. Mergulho livre para todos e mergulho de cilindro para avançados.</p>
     <div class="acoes">
       <a href="#experiencias" class="btn btn-1">Escolher minha experiência</a>
     </div>
@@ -288,6 +288,60 @@ body.menu-aberto .fixo{display:none!important}
 </section>
 
 <!-- ATALHO: por onde começar -->
+<section class="proximas" id="proximas">
+  <div class="wrap">
+    <span class="tag">Próximas datas</span>
+    <h2>Datas abertas agora.</h2>
+    <p class="intro">Vagas limitadas. As datas são liberadas aos poucos.</p>
+    <div id="proximas-lista" class="proximas-lista"></div>
+        <p class="proximas-vazio" id="proximas-vazio" hidden>No momento não há datas abertas. Novas datas são liberadas aos poucos. <a href="https://wa.me/5511937491509?text=Ol%C3%A1!%20Quero%20saber%20das%20pr%C3%B3ximas%20datas%20do%20Alcatrazes." target="_blank" rel="noopener">Fale com a gente no WhatsApp</a> para saber das próximas.</p>
+  </div>
+</section>
+<style>
+.proximas{padding:56px 0 24px}
+.proximas .intro{text-align:center;color:var(--cinza);margin:0 auto 28px}
+.proximas-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;max-width:980px;margin:0 auto}
+.data-card{display:flex;flex-direction:column;gap:4px;padding:20px;border-radius:24px;border:1px solid var(--linha);background:var(--navy);text-decoration:none;color:var(--branco)}
+.data-card:hover{border-color:rgba(111,214,230,.5)}
+.data-card b{font-size:1.5rem;font-weight:600}
+.data-card span{color:var(--cinza);text-transform:capitalize;font-size:.95rem}
+.data-card em{font-style:normal;color:var(--azul);font-size:.85rem;margin-top:8px}
+.data-card small{color:var(--cinza-2);font-size:.8rem}
+.proximas-vazio{text-align:center;color:var(--cinza);max-width:620px;margin:0 auto}
+.proximas-vazio a{color:var(--azul)}
+.wa-bloco{text-align:center;margin-top:28px}
+</style>
+<script>
+(async function(){
+  const lista=document.getElementById('proximas-lista');
+  const vazio=document.getElementById('proximas-vazio');
+  const h=new Date();
+  const from=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');
+  try{
+    const r=await fetch('/api/trips?from='+from);
+    const j=await r.json();
+    const datas=(j.trips||[])
+      .filter(t=>String(t.destination).toLowerCase()==='alcatrazes' && t.status==='scheduled' && t.available>0)
+      .slice(0,8);
+    if(!datas.length){ vazio.hidden=false; return; }
+    datas.forEach(t=>{
+      const dt=new Date(t.date+'T12:00:00');
+      const dia=dt.toLocaleDateString('pt-BR',{weekday:'long'});
+      const dataTxt=dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+      const scuba=t.line==='scuba';
+      const nome=scuba?'Scuba · só avançados':'Mergulho livre · para todos';
+      const vagas=t.available+(t.available>1?' vagas restantes':' vaga restante');
+      const a=document.createElement('a');
+      a.className='data-card';
+      a.href='booking.html?destino='+(scuba?'scuba':'alcatrazes');
+      a.innerHTML='<b>'+dataTxt+'</b><span>'+dia+'</span><em>'+nome+'</em><small>'+vagas+'</small>';
+      lista.appendChild(a);
+    });
+  }catch(e){ vazio.hidden=false; }
+})();
+</script>
+
+
 <!-- FAIXA DE CREDENCIAIS -->
 <section style="padding:26px 0;border-top:1px solid #222;border-bottom:1px solid #222">
   <div class="wrap" style="text-align:center;font-size:.95rem;letter-spacing:.02em;color:var(--cinza)">Biólogo · Instrutor de mergulho · Credenciado pelo ICMBio em Alcatrazes</div>
