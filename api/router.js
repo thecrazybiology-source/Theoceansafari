@@ -470,7 +470,7 @@ async function adminTrips(req, res) {
          end_time=EXCLUDED.end_time, meeting_point=EXCLUDED.meeting_point, destination=EXCLUDED.destination,
          price_cents=EXCLUDED.price_cents, updated_at=now()`,
       [date, line, dest, start || times.start, end || times.end,
-        point || 'Píer da Vila, Ilhabela', Math.round(priceValue * 100), cap]
+        point || 'Píer da Vila, R. Dr. Carvalho, 184-264, Ilhabela', Math.round(priceValue * 100), cap]
     );
     return res.status(201).json({ ok: true, line });
   }
