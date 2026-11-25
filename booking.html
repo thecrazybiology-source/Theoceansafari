@@ -1783,7 +1783,8 @@ function tripErrorMessage(data, fallback){
   if(e === 'boat_conflict') return 'Já existe uma saída do The Ocean Safari Alcatrazes nesse dia (mesmo barco). Cancele ou remova essa saída antes de criar o scuba, ou o contrário.';
   if(e === 'scuba_requires_alcatrazes') return 'O scuba só pode sair para Alcatrazes.';
   if(e === 'trip_has_bookings_destination_change') return 'Essa saída já tem reserva: não dá para trocar o destino. Resolva as reservas antes.';
-  return fallback;
+  // Mostra o código do servidor, para diagnosticar quando a mensagem não é conhecida.
+  return e ? fallback + ' (código: ' + e + ')' : fallback;
 }
 async function updateTripField(date, field, value, line){
   const body = { date, line: line || 'signature' };
