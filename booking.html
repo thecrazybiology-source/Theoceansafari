@@ -533,7 +533,7 @@ function isAlcatrazesTrip(t){ return String((t && t.destination) || '').toLowerC
 // como "Alcatrazes", não como "Signature".
 function tripLabel(t){
   if(!t) return '';
-  if(t.line === 'scuba') return 'Scuba · Alcatrazes';
+  if(t.line === 'scuba') return 'Alcatrazes Scuba';
   return isAlcatrazesTrip(t) ? 'Alcatrazes' : (LINE_LABELS[t.line] || t.line);
 }
 if(DEST_MODE === 'alcatrazes'){
@@ -1417,7 +1417,7 @@ function renderStep(step){
     // Alcatrazes é produto da Pélago Expedições: não leva a marca The Ocean Safari.
     const isAlc = isAlcatrazesTrip(TRIPS[checkoutState.key]);
     const isScubaTrip = checkoutState.line === 'scuba';
-    const tripName = isScubaTrip ? 'The Ocean Safari Scuba · Alcatrazes' : isAlc ? 'Alcatrazes · Pélago Expedições' : 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
+    const tripName = isScubaTrip ? 'The Ocean Safari Alcatrazes Scuba' : isAlc ? 'Alcatrazes · Pélago Expedições' : 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
     const waNumber = WHATSAPP_NUMBER;
     const kitCount = checkoutState.gear.kits || 0;
     const gearLine = !tripHasGear(TRIPS[checkoutState.key]) ? ''
