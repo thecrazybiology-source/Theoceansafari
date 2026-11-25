@@ -272,7 +272,7 @@ body.menu-aberto .fixo{display:none!important}
 .menu-grupo{position:relative}
 .menu-grupo::after{content:"";position:absolute;left:0;right:0;top:100%;height:14px}
 .menu-titulo{font-size:.78rem;letter-spacing:-.01em;color:#d2d2d7;padding:0}
-.submenu{display:none;position:absolute;top:100%;left:-16px;margin-top:14px;flex-direction:column;gap:2px;min-width:200px;padding:10px 0;background:rgba(28,28,30,.96);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:5}
+.submenu{display:none;position:absolute;top:100%;left:-16px;margin-top:14px;flex-direction:column;gap:2px;min-width:200px;padding:10px 0;background:rgba(3,9,18,.78);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:5}
 .menu-grupo:hover .submenu,.menu-grupo:focus-within .submenu{display:flex}
 .submenu a{padding:9px 18px;font-size:.8rem;white-space:nowrap;color:#e8e8ed}
 @media (max-width:860px){.menu-grupo{width:100%;position:static}.menu-grupo::after{display:none}.menu-titulo{font-size:1.75rem;font-weight:600;color:#e8e8ed;padding:6px 0;letter-spacing:-.02em;display:block}.submenu{display:flex;position:static;margin:0 0 6px;padding:0 0 0 14px;background:none;box-shadow:none;border-radius:0;min-width:0;gap:0}.submenu a{font-size:1.25rem;font-weight:500;padding:6px 0;white-space:normal;color:#d2d2d7}}
