@@ -1770,7 +1770,9 @@ async function submitManualReservation(){
 // Traduz os erros do servidor ao criar ou editar uma saída.
 function tripErrorMessage(data, fallback){
   const e = data && data.error;
-  if(e === 'alcatrazes_requires_signature') return 'Alcatrazes só pode ser destino da linha Signature.';
+  if(e === 'alcatrazes_requires_signature') return 'Alcatrazes só pode ser destino da linha Signature ou Scuba.';
+  if(e === 'boat_conflict') return 'Já existe uma saída Signature nesse dia (mesmo barco). Cancele ou remova essa saída antes de criar o scuba.';
+  if(e === 'scuba_requires_alcatrazes') return 'O scuba só pode sair para Alcatrazes.';
   if(e === 'trip_has_bookings_destination_change') return 'Essa saída já tem reserva: não dá para trocar o destino. Resolva as reservas antes.';
   return fallback;
 }
@@ -1910,7 +1912,8 @@ async function createTrip(){
   }
   closeNewTripForm();
   renderAdmin(); fetchTrips();
-  showToast(`Nova saída ${line==='signature'?'Signature':'Explorer'} criada em ${date}`);
+  const nomeLinha = line==='scuba' ? 'Scuba' : (line==='signature' ? 'Signature' : 'Explorer');
+  showToast(`Nova saída ${nomeLinha} criada em ${date}`);
 }
 
 function exportCSV(){
