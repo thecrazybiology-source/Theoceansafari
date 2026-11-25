@@ -247,6 +247,14 @@ body.menu-aberto .fixo{display:none!important}
 .ohyes.on{opacity:1}
 
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+.menu-grupo{position:relative}
+.menu-grupo::after{content:"";position:absolute;left:0;right:0;top:100%;height:14px}
+.menu-titulo{font-size:.78rem;letter-spacing:-.01em;color:#d2d2d7;padding:0}
+.submenu{display:none;position:absolute;top:100%;left:-16px;margin-top:14px;flex-direction:column;gap:2px;min-width:200px;padding:10px 0;background:rgba(28,28,30,.96);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:5}
+.menu-grupo:hover .submenu,.menu-grupo:focus-within .submenu{display:flex}
+.submenu a{padding:9px 18px;font-size:.8rem;white-space:nowrap;color:#e8e8ed}
+@media (max-width:860px){.menu-grupo{width:100%;position:static}.menu-grupo::after{display:none}.menu-titulo{font-size:1.75rem;font-weight:600;color:#e8e8ed;padding:6px 0;letter-spacing:-.02em;display:block}.submenu{display:flex;position:static;margin:0 0 6px;padding:0 0 0 14px;background:none;box-shadow:none;border-radius:0;min-width:0;gap:0}.submenu a{font-size:1.25rem;font-weight:500;padding:6px 0;white-space:normal;color:#d2d2d7}}
+
 </style>
 </head>
 <body>
@@ -256,8 +264,7 @@ body.menu-aberto .fixo{display:none!important}
     <a href="https://www.thecrazybiology.com/" class="logo" id="logo" aria-label="TheCrazyBiology, página inicial"><img src="logo-thecrazybiology-escuro.webp" alt="TheCrazyBiology" width="160" height="30"></a>
     <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">☰</button>
     <nav class="menu" id="menu">
-      <a href="https://www.thecrazybiology.com/#safari">Safari</a>
-      <a href="https://www.thecrazybiology.com/alcatrazes.html">Alcatrazes</a>
+      <div class="menu-grupo"><a href="https://www.thecrazybiology.com/alcatrazes.html" class="menu-titulo">Safari</a><div class="submenu"><a href="https://www.thecrazybiology.com/alcatrazes.html">Safari Alcatrazes</a><a href="https://www.thecrazybiology.com/ocean-safari-scuba.html">Scuba Safari</a></div></div>
       <a href="https://www.thecrazybiology.com/dive.html">Dive</a>
       <a href="https://www.thecrazybiology.com/products.html">The Products</a>
       <a href="https://www.thecrazybiology.com/#animais">Animais</a>
