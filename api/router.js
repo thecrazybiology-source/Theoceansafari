@@ -5,16 +5,15 @@
 // pelo site do GitHub no celular, sem precisar de várias pastas.
 // ============================================================
 //
-// LINHAS (Signature / Explorer)
+// PRODUTOS (antes chamados de linhas Signature / Explorer)
+// Hoje existe uma experiência de mar só: The Ocean Safari Alcatrazes, no
+// Victory 300, que é gravado como line 'signature' no banco por
+// compatibilidade com as saídas antigas. O scuba de Alcatrazes é line
+// 'scuba', no mesmo barco, e nunca no mesmo dia do Alcatrazes.
+// Linha 'explorer' está aposentada: o banco ainda lê as antigas, mas não
+// se cria mais saída nova com ela. Ilhabela também não se cria mais: o
+// destino de toda saída nova é Alcatrazes.
 // Uma saída é identificada por DATA + LINHA, não só pela data.
-//   - signature: Daniel guiando, embarcação confortável, grupos menores.
-//     Vai para Ilhabela o ano todo e, no verão, para Alcatrazes.
-//   - explorer: biólogo e instrutor da equipe, embarcação de aventura,
-//     grupos maiores. Roda em paralelo, no mesmo dia da Signature.
-// Alcatrazes NÃO é uma linha: é um destino da Signature. Por isso ele
-// é o campo `destination`, e não um terceiro valor de `line` — assim o
-// banco garante sozinho que a Signature não seja marcada para Ilhabela
-// e Alcatrazes no mesmo dia, o que seria impossível na prática.
 // ============================================================
 const crypto = require('crypto');
 const { Pool } = require('pg');
@@ -27,6 +26,9 @@ const TERMS_VERSION = '1.1';
 
 const LINES = ['signature', 'explorer', 'scuba'];
 const DEFAULT_LINE = 'signature';
+// Linhas que não se cria mais. Ficam em LINES só para ler as saídas antigas.
+const RETIRED_LINES = ['explorer'];
+const DEFAULT_DESTINATION = 'Alcatrazes';
 
 // Padrões de cada linha. Servem como fallback quando o admin cria uma
 // saída sem informar tudo — evita cadastrar Explorer com preço e
@@ -433,11 +435,15 @@ async function adminTrips(req, res) {
     const { date, capacity, start, end, point, price, destination } = body;
     const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
     if (!date) return res.status(400).json({ error: 'missing_or_invalid_fields' });
+    if (RETIRED_LINES.includes(line)) return res.status(400).json({ error: 'line_retired' });
 
     const defaults = LINE_DEFAULTS[line];
     const cap = Number(capacity) > 0 ? Number(capacity) : defaults.capacity;
-    const dest = String(destination || 'Ilhabela').trim() || 'Ilhabela';
+    const dest = String(destination || DEFAULT_DESTINATION).trim() || DEFAULT_DESTINATION;
     const fallbackPrice = line === 'scuba' ? SCUBA_PRICE : (isAlcatrazes(dest) ? ALCATRAZES_PRICE : defaults.price);
+    if (!isAlcatrazes(dest)) {
+      return res.status(400).json({ error: 'only_alcatrazes_offered' });
+    }
     const priceValue = Number(price) > 0 ? Number(price) : fallbackPrice;
 
     // Alcatrazes é destino exclusivo da Signature: exige condutor
@@ -474,8 +480,8 @@ async function adminTrips(req, res) {
     const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
     if (!date) return res.status(400).json({ error: 'missing_date' });
 
-    if (destination && String(destination).toLowerCase() === 'alcatrazes' && line === 'explorer') {
-      return res.status(400).json({ error: 'alcatrazes_requires_signature' });
+    if (destination != null && !isAlcatrazes(destination)) {
+      return res.status(400).json({ error: 'only_alcatrazes_offered' });
     }
     if (destination != null && await destinationChangeBlocked(pool, date, line, destination)) {
       return res.status(409).json({ error: 'trip_has_bookings_destination_change' });
@@ -518,48 +524,10 @@ async function adminTrips(req, res) {
 }
 
 async function adminTripsBulkPost(req, res) {
-  const body = readBody(req);
-  const { months, capacity, price, point, daysOfWeek, destination } = body;
-  const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
-  const defaults = LINE_DEFAULTS[line];
-
-  const monthsAhead = Number(months) > 0 ? Number(months) : 12;
-  const cap = Number(capacity) > 0 ? Number(capacity) : defaults.capacity;
-  const priceCents = Math.round((Number(price) > 0 ? Number(price) : defaults.price) * 100);
-  const dows = Array.isArray(daysOfWeek) && daysOfWeek.length ? daysOfWeek : [0, 6];
-  const dest = String(destination || 'Ilhabela').trim() || 'Ilhabela';
-
-  // Alcatrazes depende de autorização do ICMBio, data a data. Criar em
-  // lote abriria à venda datas que ainda não foram autorizadas.
-  if (dest.toLowerCase() === 'alcatrazes') {
-    return res.status(400).json({ error: 'alcatrazes_bulk_not_allowed' });
-  }
-
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const limit = new Date(today); limit.setMonth(limit.getMonth() + monthsAhead);
-  const dates = [];
-  const cursor = new Date(today); cursor.setDate(cursor.getDate() + 1);
-  while (cursor <= limit) { if (dows.includes(cursor.getDay())) dates.push(dateStr(new Date(cursor))); cursor.setDate(cursor.getDate() + 1); }
-
-  const pool = getPool();
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    let created = 0;
-    for (const date of dates) {
-      const result = await client.query(
-        `INSERT INTO trips (date, line, destination, start_time, end_time, meeting_point, price_cents, capacity)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (date, line) DO NOTHING`,
-        [date, line, dest, defaults.start, defaults.end, point || 'Ilhabela', priceCents, cap]
-      );
-      created += result.rowCount;
-    }
-    await client.query('COMMIT');
-    res.status(200).json({ ok: true, line, requested: dates.length, created, skippedExisting: dates.length - created });
-  } catch (err) {
-    await client.query('ROLLBACK'); console.error('adminTripsBulkPost', err);
-    res.status(500).json({ error: 'internal_error' });
-  } finally { client.release(); }
+  // Criar em lote está desligado. Alcatrazes depende de autorização do
+  // ICMBio, data a data, e Ilhabela saiu da venda. Toda saída nova é
+  // cadastrada uma a uma, no formulário "+ Nova saída".
+  return res.status(400).json({ error: 'bulk_retired' });
 }
 
 async function adminHoldsGet(req, res) {

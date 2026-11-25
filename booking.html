@@ -318,7 +318,7 @@
       <div class="eyebrow" id="bookingEyebrow">The Ocean Safari</div>
       <h1>Escolha sua data</h1>
       <p id="bookingIntro">Selecione um dia no calendário para ver horário, vagas restantes e reservar. Alguns dias têm mais de uma expedição saindo.</p>
-      <p id="bookingSwitch" style="margin-top:10px; font-size:13px;"><a href="booking.html?destino=alcatrazes">Procurando Alcatrazes? Ver as datas</a></p>
+      <p id="bookingSwitch" style="margin-top:10px; font-size:13px;"></p>
     </div>
 
     <div class="legend">
@@ -396,7 +396,6 @@
         <h3>Saídas programadas</h3>
         <div class="toolbar">
           <button class="mini-btn" onclick="openNewTripForm()">+ Nova saída</button>
-          <button class="mini-btn" onclick="generateWeekends()">Gerar fins de semana (12 meses)</button>
           <button class="mini-btn" onclick="repriceFutureTrips()">Aplicar preços e horários atuais às saídas futuras</button>
         </div>
       </div>
@@ -404,14 +403,12 @@
         <div class="field-row" style="margin-bottom:14px;">
           <div class="field" style="margin-bottom:0;"><label>Linha</label>
             <select id="ntLine" onchange="applyLineDefaults()">
-              <option value="signature">Signature (Daniel · até 10)</option>
-              <option value="explorer">Explorer (equipe · até 16)</option>
+              <option value="signature">The Ocean Safari Alcatrazes (até 10)</option>
               <option value="scuba">Scuba Alcatrazes (avançado · até 8)</option>
             </select>
           </div>
           <div class="field" style="margin-bottom:0;"><label>Destino</label>
             <select id="ntDest" onchange="applyLineDefaults()">
-              <option value="Ilhabela">Ilhabela</option>
               <option value="Alcatrazes">Alcatrazes</option>
             </select>
           </div>
@@ -526,8 +523,11 @@ const BASE_PRICE = 599;
    mesmos nos dois.
    ------------------------------------------------------------ */
 const SCUBA_MODE = (new URLSearchParams(location.search).get('destino') || '').toLowerCase() === 'scuba';
-const DEST_MODE = (new URLSearchParams(location.search).get('destino') || '').toLowerCase() === 'alcatrazes'
-  ? 'alcatrazes' : 'ilhabela';
+// Hoje só existe o The Ocean Safari Alcatrazes. Sem parâmetro, a página
+// também mostra o calendário de Alcatrazes (o parâmetro ?destino=ilhabela
+// continua existindo só para quem precisar ver saídas antigas).
+const DEST_MODE = (new URLSearchParams(location.search).get('destino') || '').toLowerCase() === 'ilhabela'
+  ? 'ilhabela' : 'alcatrazes';
 function isAlcatrazesTrip(t){ return String((t && t.destination) || '').toLowerCase() === 'alcatrazes'; }
 // Nome que o cliente vê. Uma saída Signature para Alcatrazes aparece
 // como "Alcatrazes", não como "Signature".
@@ -540,7 +540,7 @@ if(DEST_MODE === 'alcatrazes'){
   document.title = 'Reservar Alcatrazes · The Ocean Safari';
   document.getElementById('bookingEyebrow').textContent = 'The Ocean Safari Alcatrazes';
   document.getElementById('bookingIntro').textContent = 'Uma expedição da Pélago Expedições, operadora credenciada, com condução de Daniel Munhoz. Poucas saídas por temporada, conforme autorização do ICMBio. Escolha um dia para ver horário, vagas e reservar.';
-  document.getElementById('bookingSwitch').innerHTML = '<a href="booking.html">Procurando o Safari em Ilhabela? Ver as datas</a>';
+  document.getElementById('bookingSwitch').innerHTML = '';
 }
 
 async function apiGet(url){
@@ -790,7 +790,14 @@ function todayStart(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
 // paralelo, no mesmo dia, em barcos diferentes. Por isso a saída é
 // identificada por DATA + LINHA, e não só pela data — se fosse só a
 // data, a segunda saída sobrescreveria a primeira e sumiria do site.
-const LINE_LABELS = { signature: 'Signature', explorer: 'Explorer', scuba: 'Scuba' };
+const LINE_LABELS = { signature: 'The Ocean Safari Alcatrazes', explorer: 'Explorer (antiga)', scuba: 'Scuba Alcatrazes' };
+// Nome de uma saída para a equipe. Sem destino (holds), mostra só o produto.
+function nomeSaida(line, dest){
+  if(line === 'scuba') return 'Scuba Alcatrazes';
+  if(line === 'explorer') return 'Explorer (antiga)';
+  if(dest === undefined) return 'The Ocean Safari';
+  return String(dest).toLowerCase() === 'alcatrazes' ? 'The Ocean Safari Alcatrazes' : 'Ilhabela (antiga)';
+}
 const LINE_ORDER = ['signature', 'explorer', 'scuba'];
 // Scuba de Alcatrazes: só avançados, mesmo barco da Signature. Precisa ser igual ao api/router.js.
 const SCUBA_PRICE = 1530;
@@ -1645,13 +1652,13 @@ async function renderAdmin(){
     const dest = t.destination || 'Ilhabela';
     // Alcatrazes só pode ser Signature (exige condutor credenciado pelo
     // ICMBio). O select do Explorer não oferece essa opção.
-    const destOptions = line === 'signature'
-      ? ['Ilhabela','Alcatrazes']
-      : ['Ilhabela'];
+    // Só existe um destino para saídas novas (Alcatrazes). Saídas antigas
+    // de Ilhabela aparecem travadas, para serem fechadas pelo botão Excluir/Bloquear.
+    const destOptions = [dest];
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${new Date(t.date+'T00:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})}</td>
-      <td><span class="badge ${line==='signature'?'ok':'low'}">${line==='signature'?'Signature':'Explorer'}</span></td>
+      <td><span class="badge ${line==='signature'?'ok':'low'}">${nomeSaida(line, dest)}</span></td>
       <td>
         <select class="editable" onchange="updateTripField('${t.date}','destination',this.value,'${line}')" ${destOptions.length===1?'disabled':''}>
           ${destOptions.map(o=>`<option value="${o}" ${o===dest?'selected':''}>${o}</option>`).join('')}
@@ -1682,7 +1689,7 @@ async function renderAdmin(){
       const expiresLabel = (h.status==='AGUARDANDO_CONTATO'||h.status==='AGUARDANDO_PAGAMENTO') ? new Date(h.expiresAt).toLocaleString('pt-BR') : '—';
       tr.innerHTML = `
         <td>${h.code}</td>
-        <td>${new Date(h.date+'T00:00:00').toLocaleDateString('pt-BR')}<br><span style="color:var(--shallow-dim); font-size:11px;">${(h.line||'signature')==='signature'?'Signature':'Explorer'}</span></td>
+        <td>${new Date(h.date+'T00:00:00').toLocaleDateString('pt-BR')}<br><span style="color:var(--shallow-dim); font-size:11px;">${nomeSaida(h.line||'signature')}</span></td>
         <td>${escapeHtml(h.responsible.name)}<br><span style="color:var(--shallow-dim); font-size:11px;">${escapeHtml(h.responsible.phone)}</span></td>
         <td>${escapeHtml(h.responsible.cpf)}</td>
         <td>${h.qty}${gearBadge(h)}</td>
@@ -1733,7 +1740,7 @@ let manualResLine = 'signature';
 function openManualResForm(date, line){
   manualResDateKey = date;
   manualResLine = line || 'signature';
-  const lineLabel = manualResLine==='signature' ? 'Signature' : 'Explorer';
+  const lineLabel = nomeSaida(manualResLine);
   document.getElementById('manualResDate').textContent =
     new Date(date+'T00:00:00').toLocaleDateString('pt-BR') + ' — ' + lineLabel;
   document.getElementById('mrName').value='';
@@ -1770,8 +1777,9 @@ async function submitManualReservation(){
 // Traduz os erros do servidor ao criar ou editar uma saída.
 function tripErrorMessage(data, fallback){
   const e = data && data.error;
-  if(e === 'alcatrazes_requires_signature') return 'Alcatrazes só pode ser destino da linha Signature ou Scuba.';
-  if(e === 'boat_conflict') return 'Já existe uma saída Signature nesse dia (mesmo barco). Cancele ou remova essa saída antes de criar o scuba.';
+  if(e === 'only_alcatrazes_offered') return 'Hoje a saída só pode ser para Alcatrazes.';
+  if(e === 'line_retired' || e === 'bulk_retired') return 'Esse tipo de saída não é mais criado. Use "+ Nova saída", com o The Ocean Safari Alcatrazes ou o Scuba.';
+  if(e === 'boat_conflict') return 'Já existe uma saída do The Ocean Safari Alcatrazes nesse dia (mesmo barco). Cancele ou remova essa saída antes de criar o scuba, ou o contrário.';
   if(e === 'scuba_requires_alcatrazes') return 'O scuba só pode sair para Alcatrazes.';
   if(e === 'trip_has_bookings_destination_change') return 'Essa saída já tem reserva: não dá para trocar o destino. Resolva as reservas antes.';
   return fallback;
@@ -1807,7 +1815,7 @@ function viewPax(date, line){
   // Signature e da Explorer, e misturar as duas listas embarcaria gente
   // no barco errado.
   const list = ADMIN_HOLDS.filter(h=>h.date===date && (h.line||'signature')===wanted && h.status!=='CANCELADA' && h.status!=='EXPIRADA');
-  const lineLabel = wanted==='signature' ? 'Signature' : 'Explorer';
+  const lineLabel = nomeSaida(wanted);
   if(list.length===0){ showToast('Nenhum passageiro nesta saída ainda'); return; }
   alert('Passageiros em '+date+' — '+lineLabel+':\n\n'+list.map(h=>`${h.responsible.name} (${h.qty} pessoa(s), código ${h.code}, ${STATUS_LABELS[h.status]})`).join('\n'));
 }
@@ -1826,8 +1834,7 @@ function closeNewTripForm(){ document.getElementById('newTripForm').style.displa
 // Explorer com 10 vagas a R$ 599 por esquecimento. Precisam ser iguais
 // aos LINE_DEFAULTS e ALCATRAZES_PRICE do servidor (api/router.js).
 const LINE_PRESETS = {
-  signature: { price: 599, capacity: 10 },
-  explorer:  { price: 499, capacity: 16 },
+  signature: { price: 730, capacity: 10 }, // The Ocean Safari Alcatrazes (Victory 300)
   scuba:     { price: SCUBA_PRICE, capacity: 8 }
 };
 const ALCATRAZES_PRICE = 730;
@@ -1860,9 +1867,7 @@ function applyLineDefaults(){
 // mensagem, para decidir uma a uma na tabela.
 async function repriceFutureTrips(){
   const plan = [
-    { line:'signature', destination:'Ilhabela',   price:LINE_PRESETS.signature.price, label:'Signature' },
-    { line:'explorer',  destination:'Ilhabela',   price:LINE_PRESETS.explorer.price,  label:'Explorer' },
-    { line:'signature', destination:'Alcatrazes', price:ALCATRAZES_PRICE,             label:'Alcatrazes' }
+    { line:'signature', destination:'Alcatrazes', price:ALCATRAZES_PRICE, label:'The Ocean Safari Alcatrazes' }
   ];
   const resumo = plan.map(p=>`${p.label}: R$ ${p.price}`).join('\n');
   if(!confirm(`Aplicar estes preços a todas as saídas futuras?\n\n${resumo}\n\nO horário também é corrigido (Alcatrazes: 7h às 13h). Datas que já têm alguém reservado continuam com o preço antigo.`)) return;
@@ -1881,21 +1886,6 @@ async function repriceFutureTrips(){
   }
 }
 
-async function generateWeekends(){
-  const line = prompt('Gerar fins de semana para qual linha? Digite "signature" ou "explorer".', 'signature');
-  if(!line) return;
-  const norm = String(line).trim().toLowerCase();
-  if(!['signature','explorer'].includes(norm)){ showToast('Linha inválida. Use signature ou explorer.'); return; }
-  const preset = LINE_PRESETS[norm];
-  if(!confirm(`Isso cria uma saída da linha ${norm==='signature'?'Signature':'Explorer'} em todo sábado e domingo dos próximos 12 meses (capacidade ${preset.capacity}, preço R$ ${preset.price}, destino Ilhabela). Datas que já existem nessa linha não são alteradas. Continuar?`)) return;
-  const { ok, data } = await apiSend('/api/admin/trips/bulk', 'POST', {
-    months: 12, line: norm, capacity: preset.capacity, price: preset.price,
-    point: 'Ilhabela', destination: 'Ilhabela', daysOfWeek: [0,6]
-  });
-  if(!ok){ showToast('Não foi possível gerar as datas.'); return; }
-  showToast(`${data.created} nova(s) saída(s) criada(s) (${data.skippedExisting} já existiam).`);
-  renderAdmin(); fetchTrips();
-}
 async function createTrip(){
   const date = document.getElementById('ntDate').value;
   const line = document.getElementById('ntLine').value || 'signature';
@@ -1912,7 +1902,7 @@ async function createTrip(){
   }
   closeNewTripForm();
   renderAdmin(); fetchTrips();
-  const nomeLinha = line==='scuba' ? 'Scuba' : (line==='signature' ? 'Signature' : 'Explorer');
+  const nomeLinha = line==='scuba' ? 'Scuba Alcatrazes' : 'The Ocean Safari Alcatrazes';
   showToast(`Nova saída ${nomeLinha} criada em ${date}`);
 }
 
@@ -1925,7 +1915,7 @@ function exportCSV(){
   };
   const rows = [['Código','Data','Linha','Responsável','Telefone','CPF','Pessoas','Máscara','Snorkel','Roupa 2mm','Nadadeira','Equipamento (R$)','Status']];
   ADMIN_HOLDS.filter(h=>h.status==='CONFIRMADA').forEach(h=>{
-    const lineLabel = (h.line||'signature')==='signature' ? 'Signature' : 'Explorer';
+    const lineLabel = nomeSaida(h.line||'signature');
     const g = h.gear || {};
     rows.push([h.code, h.date, lineLabel, csvSafe(h.responsible.name), csvSafe(h.responsible.phone), csvSafe(h.responsible.cpf), h.qty,
       g.masks||0, g.snorkels||0, g.wetsuits||0, g.fins||0, g.total||0, h.status]);
