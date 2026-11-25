@@ -239,6 +239,14 @@ body.menu-aberto .fixo{display:none!important}
 @media (min-width:1441px){.capa{-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}}
 .hero p{color:#eef3f8}
 .hero .capa{margin-bottom:8px}
+/* hero em sobreposição: título sobre o mar, vídeo ao fundo */
+.hero{position:relative;overflow:hidden;min-height:700px;display:flex;align-items:flex-end;padding-top:0!important;padding-bottom:64px!important}
+.hero .capa{position:absolute;inset:0;margin:0;max-width:none;z-index:0}
+.hero .capa video{width:100%;height:100%;aspect-ratio:auto!important;object-fit:cover;object-position:center 70%}
+.hero .capa::before{top:0;height:45%;background:linear-gradient(rgba(13,31,56,.92),rgba(13,31,56,0))}
+.hero .capa::after{bottom:0;height:55%;background:linear-gradient(rgba(7,16,29,0),rgba(7,16,29,.88) 70%,#07101d)}
+.hero .wrap{position:relative;z-index:1;width:100%}
+@media (max-width:860px){.hero{min-height:600px;padding-bottom:56px!important}.hero .capa::before{height:55%}}
 @media (max-width:860px){.hero{padding-top:48px!important;padding-bottom:80px!important}.capa{margin-bottom:28px}.capa::before{height:12%}.capa::after{height:34%}}
 .titulo-linha{font-size:clamp(1rem,5.4vw,3.5rem);white-space:nowrap;max-width:none}
 .loja-home{background:var(--grafite)}
@@ -281,7 +289,7 @@ body.menu-aberto .fixo{display:none!important}
 <!-- 1. HERO -->
 <section class="hero">
   <figure class="capa">
-    <video src="cilindro-clip.mp4" muted loop playsinline autoplay preload="auto" aria-label="Golfinho saltando com o arquipélago de Alcatrazes ao fundo" style="display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover"></video>
+    <video src="cilindro-clip-hd.mp4" muted loop playsinline autoplay preload="auto" aria-label="Golfinho saltando com o arquipélago de Alcatrazes ao fundo" style="display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover"></video>
   </figure>
   <div class="wrap">
     <span class="tag">The Ocean Safari, Alcatrazes</span>
