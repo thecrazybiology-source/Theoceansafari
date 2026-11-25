@@ -25,7 +25,7 @@ const { Pool } = require('pg');
 // antigos deixa de corresponder ao texto que a pessoa realmente aceitou.
 const TERMS_VERSION = '1.1';
 
-const LINES = ['signature', 'explorer'];
+const LINES = ['signature', 'explorer', 'scuba'];
 const DEFAULT_LINE = 'signature';
 
 // Padrões de cada linha. Servem como fallback quando o admin cria uma
@@ -33,8 +33,14 @@ const DEFAULT_LINE = 'signature';
 // capacidade de Signature por esquecimento.
 const LINE_DEFAULTS = {
   signature: { capacity: 10, price: 599, start: '06:00', end: '12:00' },
-  explorer:  { capacity: 16, price: 499, start: '06:00', end: '12:00' }
+  explorer:  { capacity: 16, price: 499, start: '06:00', end: '12:00' },
+  // Scuba de Alcatrazes: só mergulhadores avançados, mesmo barco da Signature.
+  scuba:     { capacity: 8,  price: 1530, start: '07:00', end: '13:00' }
 };
+// Preço do scuba: sem equipamento. Aluguel de equipamento é um acréscimo por pessoa.
+// Precisa ser igual ao SCUBA_PRICE e SCUBA_GEAR_SURCHARGE do booking.html.
+const SCUBA_PRICE = 1530;
+const SCUBA_GEAR_SURCHARGE = 250; // por pessoa, em reais
 
 // Alcatrazes sai no barco da Signature, mas tem preço próprio.
 // Precisa ser igual ao ALCATRAZES_PRICE do booking.html.
@@ -60,6 +66,17 @@ async function destinationChangeBlocked(pool, date, line, newDest) {
 }
 function isAlcatrazes(dest) { return String(dest || '').trim().toLowerCase() === 'alcatrazes'; }
 
+// Scuba e Signature usam o mesmo barco (Victory 300). Não podem existir no mesmo dia.
+// Explorer roda em outro barco, então não entra nessa regra.
+async function boatConflict(pool, date, line) {
+  if (line !== 'signature' && line !== 'scuba') return false;
+  const other = line === 'scuba' ? 'signature' : 'scuba';
+  const { rowCount } = await pool.query(
+    `SELECT 1 FROM trips WHERE date = $1 AND line = $2 AND status = 'scheduled' LIMIT 1`, [date, other]
+  );
+  return rowCount > 0;
+}
+
 // Normaliza o que vier do cliente/admin. Qualquer coisa fora da lista
 // vira null, e quem chamou decide se rejeita ou usa o padrão.
 function normalizeLine(value, { fallback = null } = {}) {
@@ -74,7 +91,8 @@ function normalizeLine(value, { fallback = null } = {}) {
 // Isso é o que torna o comprovante confiável: ele não pode ser fabricado
 // nem alterado por quem está preenchendo o formulário.
 function generateAcceptanceHash({ termsVersion, cpf, signatureName, acceptedAt }) {
-  const raw = `${termsVersion}|${String(cpf).replace(/\D/g, '')}|${signatureName.trim().toLowerCase()}|${acceptedAt}`;
+  const doc = String(cpf).toUpperCase().replace(/[^A-Z0-9:]/g, '');
+  const raw = `${termsVersion}|${doc}|${signatureName.trim().toLowerCase()}|${acceptedAt}`;
   return 'sha256-' + crypto.createHash('sha256').update(raw).digest('hex');
 }
 
@@ -89,8 +107,9 @@ const GEAR_KIT_PRICE = 100; // por kit, em reais
 // O total é sempre recalculado aqui, a partir da quantidade de kits.
 // Nunca se aceita um valor vindo do navegador: quem envia o pedido
 // poderia simplesmente mandar zero.
-function calcGearTotalCents(kits) {
-  return Number(kits || 0) * GEAR_KIT_PRICE * 100;
+function calcGearTotalCents(kits, line) {
+  const unit = line === 'scuba' ? SCUBA_GEAR_SURCHARGE : GEAR_KIT_PRICE;
+  return Number(kits || 0) * unit * 100;
 }
 
 // Máscara e snorkel ganharam colunas próprias depois que o banco já
@@ -200,6 +219,19 @@ async function getHoldMinutes(pool) {
 // ---------- Util ----------
 function genCode(year, n) { return `OCS-${year}-${String(n).padStart(5, '0')}`; }
 function isValidCpfFormat(cpf) { return String(cpf || '').replace(/\D/g, '').length === 11; }
+
+// Quem não tem CPF (estrangeiro) informa o número do passaporte. Ele é
+// gravado com o prefixo PASSPORT: para o admin distinguir do CPF.
+function documentFromResponsible(resp) {
+  if (resp && resp.foreign === true) {
+    const pass = String(resp.passport || '').toUpperCase().replace(/[\s.-]/g, '');
+    if (!/^[A-Z0-9]{5,20}$/.test(pass)) return { ok: false, error: 'invalid_passport_format' };
+    return { ok: true, doc: 'PASSPORT:' + pass };
+  }
+  if (!resp || !resp.cpf) return { ok: false, error: 'missing_responsible_data' };
+  if (!isValidCpfFormat(resp.cpf)) return { ok: false, error: 'invalid_cpf_format' };
+  return { ok: true, doc: resp.cpf };
+}
 function dateStr(v) { return v instanceof Date ? v.toISOString().slice(0, 10) : v; }
 
 const VALID_STATUSES = ['AGUARDANDO_CONTATO', 'AGUARDANDO_PAGAMENTO', 'CONFIRMADA', 'CANCELADA', 'EXPIRADA'];
@@ -248,8 +280,9 @@ async function holdsPost(req, res) {
   // é esse o padrão quando o campo não vem.
   const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
 
-  if (!responsible || !responsible.name || !responsible.phone || !responsible.cpf) return res.status(400).json({ error: 'missing_responsible_data' });
-  if (!isValidCpfFormat(responsible.cpf)) return res.status(400).json({ error: 'invalid_cpf_format' });
+  if (!responsible || !responsible.name || !responsible.phone) return res.status(400).json({ error: 'missing_responsible_data' });
+  const docInfo = documentFromResponsible(responsible);
+  if (!docInfo.ok) return res.status(400).json({ error: docInfo.error });
   if (healthConsent !== true) return res.status(400).json({ error: 'health_consent_required' });
 
   // A assinatura eletrônica exige que a pessoa digite o próprio nome de novo,
@@ -263,7 +296,7 @@ async function holdsPost(req, res) {
 
   const acceptedAt = new Date().toISOString();
   const documentHash = generateAcceptanceHash({
-    termsVersion: TERMS_VERSION, cpf: responsible.cpf, signatureName, acceptedAt
+    termsVersion: TERMS_VERSION, cpf: docInfo.doc, signatureName, acceptedAt
   });
 
   const pool = getPool();
@@ -286,8 +319,13 @@ async function holdsPost(req, res) {
     const gearIn = (body.gear && typeof body.gear === 'object') ? body.gear : {};
     const kits = gearAllowed ? normalizeGearQty(gearIn.kits, qty) : 0;
     // Cada kit é uma máscara, um snorkel, uma roupa 2mm e uma nadadeira.
-    const gear = { masks: kits, snorkels: kits, wetsuits: kits, fins: kits };
-    const gearTotalCents = calcGearTotalCents(kits);
+    // No scuba o equipamento é outro (colete, roupa, regulador, nadadeira):
+    // por isso as colunas de máscara/snorkel ficam zeradas e só o total vale.
+    const isScuba = line === 'scuba';
+    const gear = isScuba
+      ? { masks: 0, snorkels: 0, wetsuits: 0, fins: 0 }
+      : { masks: kits, snorkels: kits, wetsuits: kits, fins: kits };
+    const gearTotalCents = calcGearTotalCents(kits, line);
 
     const seqRes = await client.query(`SELECT nextval('hold_code_seq') AS n`);
     const year = new Date(`${date}T00:00:00Z`).getUTCFullYear();
@@ -297,7 +335,7 @@ async function holdsPost(req, res) {
     const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '').split(',')[0].trim();
     const ua = req.headers['user-agent'] || '';
 
-    const baseValues = [code, date, line, qty, responsible.name, responsible.email || null, responsible.phone, responsible.cpf,
+    const baseValues = [code, date, line, qty, responsible.name, responsible.email || null, responsible.phone, docInfo.doc,
       JSON.stringify(participants || []), healthAnswer === true, healthNote || null, healthConsent === true,
       TERMS_VERSION, acceptedAt, documentHash, ip, ua, expiresAt,
       gear.wetsuits, gear.fins, gearTotalCents];
@@ -399,14 +437,20 @@ async function adminTrips(req, res) {
     const defaults = LINE_DEFAULTS[line];
     const cap = Number(capacity) > 0 ? Number(capacity) : defaults.capacity;
     const dest = String(destination || 'Ilhabela').trim() || 'Ilhabela';
-    const fallbackPrice = isAlcatrazes(dest) ? ALCATRAZES_PRICE : defaults.price;
+    const fallbackPrice = line === 'scuba' ? SCUBA_PRICE : (isAlcatrazes(dest) ? ALCATRAZES_PRICE : defaults.price);
     const priceValue = Number(price) > 0 ? Number(price) : fallbackPrice;
 
     // Alcatrazes é destino exclusivo da Signature: exige condutor
     // credenciado pelo ICMBio, que é o Daniel. Barrar aqui evita que a
     // saída seja cadastrada errada e apareça à venda por engano.
-    if (dest.toLowerCase() === 'alcatrazes' && line !== 'signature') {
+    if (dest.toLowerCase() === 'alcatrazes' && line === 'explorer') {
       return res.status(400).json({ error: 'alcatrazes_requires_signature' });
+    }
+    if (line === 'scuba' && dest.toLowerCase() !== 'alcatrazes') {
+      return res.status(400).json({ error: 'scuba_requires_alcatrazes' });
+    }
+    if (await boatConflict(pool, date, line)) {
+      return res.status(409).json({ error: 'boat_conflict' });
     }
     if (await destinationChangeBlocked(pool, date, line, dest)) {
       return res.status(409).json({ error: 'trip_has_bookings_destination_change' });
@@ -430,7 +474,7 @@ async function adminTrips(req, res) {
     const line = normalizeLine(body.line, { fallback: DEFAULT_LINE });
     if (!date) return res.status(400).json({ error: 'missing_date' });
 
-    if (destination && String(destination).toLowerCase() === 'alcatrazes' && line !== 'signature') {
+    if (destination && String(destination).toLowerCase() === 'alcatrazes' && line === 'explorer') {
       return res.status(400).json({ error: 'alcatrazes_requires_signature' });
     }
     if (destination != null && await destinationChangeBlocked(pool, date, line, destination)) {

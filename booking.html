@@ -406,6 +406,7 @@
             <select id="ntLine" onchange="applyLineDefaults()">
               <option value="signature">Signature (Daniel · até 10)</option>
               <option value="explorer">Explorer (equipe · até 16)</option>
+              <option value="scuba">Scuba Alcatrazes (avançado · até 8)</option>
             </select>
           </div>
           <div class="field" style="margin-bottom:0;"><label>Destino</label>
@@ -524,6 +525,7 @@ const BASE_PRICE = 599;
    com o calendário de Ilhabela. Termos, assinatura e pré-reserva são os
    mesmos nos dois.
    ------------------------------------------------------------ */
+const SCUBA_MODE = (new URLSearchParams(location.search).get('destino') || '').toLowerCase() === 'scuba';
 const DEST_MODE = (new URLSearchParams(location.search).get('destino') || '').toLowerCase() === 'alcatrazes'
   ? 'alcatrazes' : 'ilhabela';
 function isAlcatrazesTrip(t){ return String((t && t.destination) || '').toLowerCase() === 'alcatrazes'; }
@@ -531,6 +533,7 @@ function isAlcatrazesTrip(t){ return String((t && t.destination) || '').toLowerC
 // como "Alcatrazes", não como "Signature".
 function tripLabel(t){
   if(!t) return '';
+  if(t.line === 'scuba') return 'Scuba · Alcatrazes';
   return isAlcatrazesTrip(t) ? 'Alcatrazes' : (LINE_LABELS[t.line] || t.line);
 }
 if(DEST_MODE === 'alcatrazes'){
@@ -746,7 +749,7 @@ function viewAcceptanceProof(code){
     <p style="font-family:'Dancing Script', cursive; font-size:26px; color:var(--foam); margin:6px 0 14px;">${escapeHtml(h.responsible.name)}</p>
     <h4>Dados do aceite</h4>
     <ul>
-      <li><b>CPF do signatário:</b> ${escapeHtml(h.responsible.cpf)}</li>
+      <li><b>${String(h.responsible.cpf).startsWith('PASSPORT:') ? 'Passaporte do signatário' : 'CPF do signatário'}:</b> ${escapeHtml(String(h.responsible.cpf).replace('PASSPORT:',''))}</li>
       <li><b>Aceito em:</b> ${acceptedLabel}</li>
       <li><b>IP de origem:</b> ${ipLabel}</li>
       <li><b>Dispositivo/navegador:</b> <span style="font-size:11px; word-break:break-all;">${uaLabel}</span></li>
@@ -787,8 +790,11 @@ function todayStart(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
 // paralelo, no mesmo dia, em barcos diferentes. Por isso a saída é
 // identificada por DATA + LINHA, e não só pela data — se fosse só a
 // data, a segunda saída sobrescreveria a primeira e sumiria do site.
-const LINE_LABELS = { signature: 'Signature', explorer: 'Explorer' };
-const LINE_ORDER = ['signature', 'explorer'];
+const LINE_LABELS = { signature: 'Signature', explorer: 'Explorer', scuba: 'Scuba' };
+const LINE_ORDER = ['signature', 'explorer', 'scuba'];
+// Scuba de Alcatrazes: só avançados, mesmo barco da Signature. Precisa ser igual ao api/router.js.
+const SCUBA_PRICE = 1530;
+const SCUBA_GEAR_SURCHARGE = 250; // acréscimo por pessoa para alugar o equipamento de scuba
 
 function tripKey(date, line){ return `${date}|${line}`; }
 function parseTripKey(key){
@@ -820,7 +826,9 @@ async function fetchTrips(){
   TRIPS = {};
   TRIPS_BY_DATE = {};
   (data.trips||[]).filter(t=>{
-    return DEST_MODE === 'alcatrazes' ? isAlcatrazesTrip(t) : !isAlcatrazesTrip(t);
+    if(SCUBA_MODE) return t.line === 'scuba';
+    if(DEST_MODE === 'alcatrazes') return isAlcatrazesTrip(t) && t.line !== 'scuba';
+    return !isAlcatrazesTrip(t);
   }).forEach(t=>{
     // Saídas antigas, criadas antes das linhas existirem, são Signature.
     const line = t.line || 'signature';
@@ -1037,6 +1045,7 @@ function openCheckout(key){
     healthAnswer:null, healthNote:'', healthConsent:false,
     signatureName:'',
     gear:{ wanted:null, kits:0 },
+    foreign:false, passport:'',
     otherParticipants:[]
   };
   document.getElementById('modalBg').classList.add('open');
@@ -1070,6 +1079,9 @@ function gearSummary(g, short){
 function tripHasGear(trip){
   return !!trip && String(trip.destination||'').toLowerCase() === 'alcatrazes';
 }
+// Preço por pessoa do equipamento: kit de mergulho livre ou acréscimo do scuba.
+function gearUnitPrice(){ return checkoutState.line === 'scuba' ? SCUBA_GEAR_SURCHARGE : GEAR_KIT_PRICE; }
+function gearDescription(){ return checkoutState.line === 'scuba' ? 'Colete, roupa, regulador e nadadeira' : 'Máscara, snorkel, roupa 2mm e nadadeira'; }
 // Se a pessoa diminuir o número de participantes depois de já ter
 // escolhido equipamento, as peças precisam acompanhar — senão sobraria
 // aluguel para gente que não vai mais embarcar.
@@ -1106,7 +1118,7 @@ function prevStep(current){
 // própria; aqui é só para a pessoa ver o que está somando.
 function gearTotal(){
   const kits = (checkoutState.gear && checkoutState.gear.kits) || 0;
-  return kits * GEAR_KIT_PRICE;
+  return kits * gearUnitPrice();
 }
 
 // Mostra, no painel admin, quantas peças de equipamento a reserva alugou.
@@ -1159,12 +1171,12 @@ function renderStep(step){
         Vai precisar de equipamento para o mergulho livre? O kit tem máscara, snorkel, roupa de neoprene 2mm e nadadeira. O tamanho é ajustado na prova, antes do embarque.
       </p>
       ${choice(false,'Não preciso','Vou levar o meu ou não vou entrar na água.')}
-      ${choice(true,'Sim, quero o kit',`Máscara, snorkel, roupa 2mm e nadadeira: R$ ${GEAR_KIT_PRICE} por pessoa.`)}
+      ${choice(true,'Sim, quero o equipamento',`${gearDescription()}: R$ ${gearUnitPrice()} por pessoa.`)}
       <div id="gearItems" style="display:${g.wanted===true?'block':'none'}; margin-top:8px;">
         <div class="qty-row">
           <div>
             <div style="font-size:14px;">Kit completo</div>
-            <div class="qty-note">R$ ${GEAR_KIT_PRICE} por pessoa</div>
+            <div class="qty-note">R$ ${gearUnitPrice()} por pessoa</div>
           </div>
           <div class="qty-ctrl">
             <button type="button" id="kitMinus" aria-label="Menos kits">−</button>
@@ -1215,7 +1227,8 @@ function renderStep(step){
         <div class="field"><label>E-mail</label><input id="cEmail" type="email" value="${checkoutState.email}"></div>
         <div class="field"><label>Telefone</label><input id="cPhone" value="${checkoutState.phone}"></div>
       </div>
-      <div class="field"><label>CPF (para o aceite do termo de assunção de riscos)</label><input id="cCpf" value="${checkoutState.cpf}" placeholder="000.000.000-00"></div>
+      <label style="display:flex; gap:8px; align-items:center; font-size:13.5px; margin:4px 0 12px; cursor:pointer;"><input type="checkbox" id="cForeign" ${checkoutState.foreign?'checked':''}> Sou estrangeiro e não tenho CPF</label>
+      <div class="field" id="cDocField"><label id="cDocLabel">${checkoutState.foreign ? 'Número do passaporte (para o aceite do termo de assunção de riscos)' : 'CPF (para o aceite do termo de assunção de riscos)'}</label><input id="cCpf" value="${checkoutState.foreign ? checkoutState.passport : checkoutState.cpf}" placeholder="${checkoutState.foreign ? 'Número do passaporte' : '000.000.000-00'}"></div>
       <div class="summary-box">
         <div class="summary-line"><span>${checkoutState.qty} participante(s)</span><b>R$ ${trip.price*checkoutState.qty}</b></div>
       </div>
@@ -1224,16 +1237,32 @@ function renderStep(step){
         <button class="btn btn-primary" style="flex:1;" id="toStep3">Continuar</button>
       </div>
     `;
+    document.getElementById('cForeign').onchange=(e)=>{
+      checkoutState.foreign = e.target.checked;
+      document.getElementById('cDocLabel').textContent = checkoutState.foreign ? 'Número do passaporte (para o aceite do termo de assunção de riscos)' : 'CPF (para o aceite do termo de assunção de riscos)';
+      const inp = document.getElementById('cCpf');
+      inp.placeholder = checkoutState.foreign ? 'Número do passaporte' : '000.000.000-00';
+      inp.value = '';
+    };
     document.getElementById('toStep3').onclick=()=>{
       const name=document.getElementById('cName').value.trim();
       const email=document.getElementById('cEmail').value.trim();
       const phone=document.getElementById('cPhone').value.trim();
-      const cpf=document.getElementById('cCpf').value.trim();
+      const docRaw=document.getElementById('cCpf').value.trim();
+      const foreign=document.getElementById('cForeign').checked;
       if(!name || !email.includes('@')){ showToast('Preencha nome e e-mail válidos'); return; }
       if(!phone){ showToast('Informe um telefone para contato.'); return; }
-      if(!cpf){ showToast('Informe o CPF: é necessário para o aceite individual do termo.'); return; }
-      if(cpf.replace(/\D/g,'').length !== 11){ showToast('CPF inválido: confira se digitou os 11 números corretamente.'); return; }
-      checkoutState.name=name; checkoutState.email=email; checkoutState.phone=phone; checkoutState.cpf=cpf;
+      if(foreign){
+        const pass=docRaw.toUpperCase().replace(/[\s.-]/g,'');
+        if(!/^[A-Z0-9]{5,20}$/.test(pass)){ showToast('Informe o número do passaporte (5 a 20 letras ou números).'); return; }
+        checkoutState.foreign=true; checkoutState.passport=pass; checkoutState.cpf='';
+      } else {
+        const cpf=docRaw;
+        if(!cpf){ showToast('Informe o CPF: é necessário para o aceite individual do termo.'); return; }
+        if(cpf.replace(/\D/g,'').length !== 11){ showToast('CPF inválido: confira se digitou os 11 números corretamente.'); return; }
+        checkoutState.foreign=false; checkoutState.passport=''; checkoutState.cpf=cpf;
+      }
+      checkoutState.name=name; checkoutState.email=email; checkoutState.phone=phone;
       if(checkoutState.otherParticipants.length !== checkoutState.qty-1){
         checkoutState.otherParticipants = Array.from({length: Math.max(0,checkoutState.qty-1)}, (_,i)=> checkoutState.otherParticipants[i] || {name:'', cpf:''});
       }
@@ -1350,7 +1379,7 @@ function renderStep(step){
       </div>
       <div id="signatureMsg" style="display:none; color:var(--red); font-size:12px; margin-top:-8px; margin-bottom:12px;"></div>
       <div style="font-size:11.5px; color:var(--shallow-dim); margin-top:4px;">
-        Junto com o seu CPF, a data e a hora, isso forma sua assinatura eletrônica sobre os termos aceitos — com validade jurídica, conforme a legislação brasileira sobre assinaturas eletrônicas.
+        Junto com o seu CPF (ou passaporte), a data e a hora, isso forma sua assinatura eletrônica sobre os termos aceitos — com validade jurídica, conforme a legislação brasileira sobre assinaturas eletrônicas.
       </div>
       <div style="display:flex; gap:12px; margin-top:20px;">
         <button class="btn btn-ghost" onclick="renderStep('terms')">Voltar</button>
@@ -1387,7 +1416,8 @@ function renderStep(step){
     const expiresLabel = expiresAt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+expiresAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     // Alcatrazes é produto da Pélago Expedições: não leva a marca The Ocean Safari.
     const isAlc = isAlcatrazesTrip(TRIPS[checkoutState.key]);
-    const tripName = isAlc ? 'Alcatrazes · Pélago Expedições' : 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
+    const isScubaTrip = checkoutState.line === 'scuba';
+    const tripName = isScubaTrip ? 'The Ocean Safari Scuba · Alcatrazes' : isAlc ? 'Alcatrazes · Pélago Expedições' : 'The Ocean Safari ' + (tripLabel(TRIPS[checkoutState.key]) || LINE_LABELS[checkoutState.line] || '');
     const waNumber = WHATSAPP_NUMBER;
     const kitCount = checkoutState.gear.kits || 0;
     const gearLine = !tripHasGear(TRIPS[checkoutState.key]) ? ''
@@ -1444,7 +1474,8 @@ async function submitPreReserva(){
     gear: { kits: checkoutState.gear.kits || 0 },
     responsible: {
       name: checkoutState.name, email: checkoutState.email,
-      phone: checkoutState.phone, cpf: checkoutState.cpf
+      phone: checkoutState.phone, cpf: checkoutState.cpf,
+      foreign: !!checkoutState.foreign, passport: checkoutState.passport || ''
     },
     participants: checkoutState.otherParticipants.map(pt=>({
       name: pt.name || '', cpf: pt.cpf || '',
@@ -1794,7 +1825,8 @@ function closeNewTripForm(){ document.getElementById('newTripForm').style.displa
 // aos LINE_DEFAULTS e ALCATRAZES_PRICE do servidor (api/router.js).
 const LINE_PRESETS = {
   signature: { price: 599, capacity: 10 },
-  explorer:  { price: 499, capacity: 16 }
+  explorer:  { price: 499, capacity: 16 },
+  scuba:     { price: SCUBA_PRICE, capacity: 8 }
 };
 const ALCATRAZES_PRICE = 730;
 function applyLineDefaults(){
@@ -1803,11 +1835,21 @@ function applyLineDefaults(){
   // Alcatrazes exige condutor credenciado pelo ICMBio: só Signature.
   const dest = document.getElementById('ntDest');
   const alca = dest.querySelector('option[value="Alcatrazes"]');
-  if(alca){
-    alca.disabled = line !== 'signature';
-    if(alca.disabled && dest.value === 'Alcatrazes') dest.value = 'Ilhabela';
+  const ilha = dest.querySelector('option[value="Ilhabela"]');
+  if(line === 'scuba'){
+    // Scuba é sempre Alcatrazes.
+    dest.value = 'Alcatrazes';
+    if(ilha) ilha.disabled = true;
+    if(alca) alca.disabled = false;
+  } else {
+    if(ilha) ilha.disabled = false;
+    if(alca){
+      alca.disabled = line !== 'signature';
+      if(alca.disabled && dest.value === 'Alcatrazes') dest.value = 'Ilhabela';
+    }
   }
-  document.getElementById('ntPrice').value = dest.value === 'Alcatrazes' ? ALCATRAZES_PRICE : preset.price;
+  const isAlcSaida = dest.value === 'Alcatrazes';
+  document.getElementById('ntPrice').value = line === 'scuba' ? SCUBA_PRICE : (isAlcSaida ? ALCATRAZES_PRICE : preset.price);
   document.getElementById('ntCap').value = preset.capacity;
 }
 
