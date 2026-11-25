@@ -324,6 +324,7 @@ body.menu-aberto .fixo{display:none!important}
 .data-card small{color:var(--cinza-2);font-size:.8rem}
 .proximas-vazio{text-align:center;color:var(--cinza);max-width:620px;margin:0 auto}
 .proximas-vazio a{color:var(--azul)}
+@media (max-width:860px){.proximas{padding:40px 0 16px}.proximas .intro{margin-bottom:20px}.proximas-lista{grid-template-columns:repeat(3,1fr);gap:8px}.data-card{padding:12px 6px;border-radius:16px;gap:2px;text-align:center;align-items:center;min-width:0}.data-card b{font-size:1rem}.data-card span{font-size:.72rem;line-height:1.25}.data-card em{font-size:.62rem;margin-top:4px;white-space:nowrap;letter-spacing:-.01em}.data-card small{font-size:.66rem}}
 .wa-bloco{text-align:center;margin-top:28px}
 </style>
 <script>
@@ -344,7 +345,7 @@ body.menu-aberto .fixo{display:none!important}
       const dia=dt.toLocaleDateString('pt-BR',{weekday:'long'});
       const dataTxt=dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
       const scuba=t.line==='scuba';
-      const nome=scuba?'Scuba · só avançados':'Mergulho livre · para todos';
+      const nome=scuba?'Scuba avançado':'The Ocean Safari';
       const vagas=t.available+(t.available>1?' vagas restantes':' vaga restante');
       const a=document.createElement('a');
       a.className='data-card';
